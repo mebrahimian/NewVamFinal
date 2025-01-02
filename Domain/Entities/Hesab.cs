@@ -35,6 +35,15 @@ namespace VamBlazor.Client.Domain.Entities
         public int V_Month => DateFunctions.GetMonth(Date);
         [NotMapped]
         public int V_Year => DateFunctions.GetYear(Date);
+        [NotMapped]
+        public long V_Mojodi
+        {
+            get
+            {
+                return (Firstqty ?? 0) + (Curqty ?? 0); // مجموع یا محاسبه دلخواه
+            }
+        }
     }
+}   
 
-}
+

@@ -31,28 +31,66 @@
                 <MudGrid>
                     <!-- ردیف اول: Code و City , Sex -->
                     <div style="width: 100px">
-                           <MudTextField Label="کد شخص" Required Immediate="true"
-                            For="@(() => CurrentPersonAccountDto.Pcode)"
-                            @bind-Value="PCodeSearchable"
-                            MaxLength="5"
-                            onkeyup="OnPCodeChanged"
-                            ErrorText="@GetErrorMessageForField(nameof(CurrentPersonAccountDto.Pcode))" />
+                        <MudTextField Label="کد شخص" Required Immediate="true"
+                        For="@(() => CurrentPersonAccountDto.Pcode)"
+                        @bind-Value="PCodeSearchable"
+                        MaxLength="5"
+                        onkeyup="OnPCodeChanged"
+                        ErrorText="@GetErrorMessageForField(nameof(CurrentPersonAccountDto.Pcode))" />
                     </div>
                     <div style="width: 400px">
                         <MudItem xs="12" sm="6" md="3">
-                          <div class= "mt-3" style="width: 400px">
-                              <MudText Typo="Typo.h5" Style="background-color:azure;padding-right:10px">@CurrentPersonAccountDto.FullName</MudText>
-                          </div>
+                            <div class= "mt-3" style="width: 400px">
+                                <MudText Typo="Typo.h5" Style="background-color:azure;padding-right:10px">@CurrentPersonAccountDto.FullName</MudText>
+                            </div>
                         </MudItem>
                     </div>
-                    <MudItem xs="12" sm="6" md="3">
-                        <MudPaper Elevation="3" Class="mt-n6 pa-4" Style="width: 100%;align-self:center">
-                            <MudText Style="font-size:24px" Typo="Typo.h3">موجودی</MudText>
+                    <MudItem xs="12" sm="6" md="3" Class="pr-10 pt-0">
+                        @if (CurrentPersonAccountDto.Curqty != 0) {
+                            @if (CurrentPersonAccountDto.V_Mojodi > 10000000000) {
+                                <MudNumericField T="long?" 
+                                  @bind-Value="CurrentPersonAccountDto.V_Mojodi"  
+                                  Format="###,###"
+                                  Adornment="Adornment.End" 
+                                  AdornmentText="ریال"
+                                  Label="موجودی"
+                                  Variant="Variant.Outlined"
+                                  HideSpinButtons="true"
+                                  Style="font-size:18px"
+                                  readonly="true" />
+                             }
+                            else if (CurrentPersonAccountDto.V_Mojodi > 100000000)
+                                {
+                                    <MudNumericField T="long?"
+                                      @bind-Value="CurrentPersonAccountDto.V_Mojodi"
+                                      Format="###,###"
+                                      Adornment="Adornment.End"
+                                      AdornmentText="ریال"
+                                      Label="موجودی"
+                                      Variant="Variant.Outlined"
+                                      HideSpinButtons="true"
+                                      Style="font-size:20px"
+                                      readonly="true" />
+                                } else 
+                                {
+                                    <MudNumericField T="long?"
+                                      @bind-Value="CurrentPersonAccountDto.V_Mojodi"
+                                      Format="###,###"
+                                      Adornment="Adornment.End"
+                                      AdornmentText="ریال"
+                                      Label="موجودی"
+                                      Variant="Variant.Outlined"
+                                      HideSpinButtons="true"
+                                      Style="font-size:22px"
+                                      readonly="true" />
+                                }
+                            
+                        }
 
-                        </MudPaper>
+
                     </MudItem>
                     <MudItem xs="12" sm="6" md="3">
-                       
+
                     </MudItem>
                     <!-- ردیف دوم: Name و Familyو Father و IssueNo -->
                     <MudItem xs="12" sm="6" md="3">
@@ -67,42 +105,43 @@
                             <!-- فیلد روز -->
 
                             <MudTooltip Text="لطفاً یک روز معتبر وارد کنید" Placement="Placement.Top" Color="Color.Tertiary">
-                                <MudNumericField T="int" Style="background-color:antiquewhite;" Variant="Variant.Outlined"
-                                                 @bind-Value="CurrentPersonAccountDto.V_Day"
-                                                 Min="1"
-                                                 Max="31"
-                                                 Immediate="true" />
+                                <MudNumericField T="int" Variant="Variant.Outlined"
+                                @bind-Value="CurrentPersonAccountDto.V_Day"
+                                Min="1"
+                                Max="31"
+                                Immediate="true" />
                             </MudTooltip>
 
                             <!-- فیلد ماه -->
 
                             <MudTooltip Text="لطفاً یک ماه معتبر وارد کنید" Placement="Placement.Top" Color="Color.Tertiary">
-                                <MudNumericField T="int" Style="background-color:antiquewhite;" Variant="Variant.Outlined"
-                                                 @bind-Value="CurrentPersonAccountDto.V_Month"
-                                                 Min="1"
-                                                 Max="12"
-                                                 Immediate="true" />
+                                <MudNumericField T="int" Variant="Variant.Outlined"
+                                @bind-Value="CurrentPersonAccountDto.V_Month"
+                                Min="1"
+                                Max="12"
+                                Immediate="true" />
                             </MudTooltip>
 
                             <!-- فیلد سال -->
 
                             <MudTooltip Text="لطفاً یک سال معتبر وارد کنید" Placement="Placement.Top" Color="Color.Tertiary">
-                                <MudNumericField T="int" Style="background-color:antiquewhite;" Variant="Variant.Outlined"
-                                                 @bind-Value="CurrentPersonAccountDto.V_Year"
-                                                 Min="1300"
-                                                 Max="1499"
-                                                 Immediate="true" />
+                                <MudNumericField T="int" Variant="Variant.Outlined"
+                                @bind-Value="CurrentPersonAccountDto.V_Year"
+                                Min="1300"
+                                Max="1499"
+                                Immediate="true" />
                             </MudTooltip>
 
                         </div>
                     </MudItem>
-                    <MudItem xs="12" sm="6" md="3">
-                        <div style="width: 150px;">
-                        </div>
+                    <MudItem xs="12" sm="6" md="3" Class="pr-10">
+
+
+
                     </MudItem>
                     <MudItem xs="12" sm="6" md="3">
-                        <div>
-                            <MudImage Src="@CurrentPersonPictureAddress" Alt="محل عکس" Elevation="25" Class="rounded-lg" Style="width:150px;height:150px" />
+                        <div>                            
+                            <MudImage Src="@CurrentPersonPictureAddress" Alt="محل عکس" Elevation="25" Class="rounded-lg mt-n16" Style="width:150px;height:150px" />
                         </div>
                     </MudItem>
                     <!-- ردیف سوم: MelliCode و TelNoو bankType و HesabBank -->
@@ -110,9 +149,9 @@
                         <div style="width:100%;">
                             <MudTooltip Text="لطفاً مبلغ افتتاحیه را وارد کنید" Placement="Placement.Top" Color="Color.Tertiary">
                                 <MudNumericField Label="مبلغ افتتاحیه" Variant="Variant.Outlined" Adornment="Adornment.End" AdornmentText="ریال"
-                                                 @bind-Value="CurrentPersonAccountDto.Firstqty"
-                                                 Format="###,###"
-                                                 HideSpinButtons="true" />
+                                @bind-Value="CurrentPersonAccountDto.Firstqty"
+                                Format="###,###"
+                                HideSpinButtons="true" />
                             </MudTooltip>
                         </div>
                     </MudItem>
@@ -120,9 +159,9 @@
                         <div style="width:100%;" class="mr-n3">
                             <MudTooltip Text="لطفاً مبلغ ماهیانه را وارد کنید" Placement="Placement.Top" Color="Color.Tertiary">
                                 <MudNumericField Label="مبلغ ماهیانه" Variant="Variant.Outlined" Adornment="Adornment.End" AdornmentText="ریال"
-                                                 @bind-Value="CurrentPersonAccountDto.Monthqty"
-                                                 Format="###,###"
-                                                 HideSpinButtons="true" />
+                                @bind-Value="CurrentPersonAccountDto.Monthqty"
+                                Format="###,###"
+                                HideSpinButtons="true" />
                             </MudTooltip>
                         </div>
                     </MudItem>
@@ -130,10 +169,10 @@
                     <MudItem xs="12" sm="6" md="3">
                         <div style="width: 100px">
                             <MudTextField Label="حساب معرف" Immediate="true"
-                                          For="@(() => CurrentPersonAccountDto.IdDi)"
-                                          @bind-Value="CurrentPersonAccountDto.IdDi"
-                                          onblur="OnMoarefChanged"
-                                          ErrorText="@GetErrorMessageForField(nameof(CurrentPersonAccountDto.Pcode))" />
+                            For="@(() => CurrentPersonAccountDto.IdDi)"
+                            @bind-Value="CurrentPersonAccountDto.IdDi"
+                            onblur="OnMoarefChanged"
+                            ErrorText="@GetErrorMessageForField(nameof(CurrentPersonAccountDto.Pcode))" />
                         </div>
                     </MudItem>
                     <MudItem xs="12" sm="6" md="3">
@@ -214,6 +253,23 @@
 @code {
     //  private string Data { get; set; }
     //  private string ErrorMessage { get; set; }
+    /// <summary>
+    /// این قسمت برای تنظیم فونت برای نمایش اعداد کاربرد دارد
+    /// </summary>
+    private string _suitablefontStyle = "font-size: 19px"; // اندازه فونت اولیه
+    private long? _mojodi;
+    public long? CurrentPersonAccountDto_V_Mojodi
+    {
+        get => _mojodi;
+        set
+        {
+            _mojodi = value;
+            AdjustFontSize(_mojodi); // وقتی مقدار تغییر کرد، اندازه فونت تنظیم می‌شود
+        }
+    }
+    ///   end <summary>
+    /// 
+    /// 
 
     private bool ShowPersonList { get; set; } = false;
     private List<Person> Persons = new List<Person>();
@@ -277,7 +333,11 @@
                                  Curqty = account.Curqty,
                                  P = account.P,
                                  P1 = account.P1,
-                                 IdDi = account.IdDi
+                                 IdDi = account.IdDi,
+                                 V_Day = account.V_Day,
+                                 V_Month=account.V_Month,
+                                 V_Year= account.V_Year,
+                                 V_Mojodi = account.V_Mojodi
                              })
             .Skip(currentPage * pageSize)  // صفحه بندی
             .Take(pageSize)  // تعداد رکوردهای هر صفحه
@@ -318,45 +378,46 @@
         return false;
     }
     private void SavePerson()
-    {/*
-    try
     {
-    if (IsEditing)
-    {
-    var person = _Db.Persons.FirstOrDefault(p => p.IdDi == CurrentHesabNo);
-    if (person != null)
-    {
-    _Db.Entry(person).Property(p => p.IdDi).IsModified = false;
-    Mapper.Map(CurrentPersonDto, person); // Mapping DTO to Entity
-    _snackBar.Add($"پرسنل {CurrentPersonDto.Name} {CurrentPersonDto.Family} اصلاح شد", Severity.Success);
-    // person.Name = CurrentPersonDto.Name;
-    // person.Family = CurrentPersonDto.Family;
-    // person.Code = CurrentPersonDto.Code;
-    }
-    }
-    else
-    {
-    var newPerson = Mapper.Map<Person>(CurrentPersonDto); // Mapping DTO to Entity
-    CurrentHesabNo = 0;
-    _Db.Persons.Add(newPerson);
-    Persons.Add(newPerson);
-    _snackBar.Add($"پرسنل {CurrentPersonDto.Name} {CurrentPersonDto.Family} ثبت شد", Severity.Success);
+        /*
+        try
+        {
+        if (IsEditing)
+        {
+        var person = _Db.Persons.FirstOrDefault(p => p.IdDi == CurrentHesabNo);
+        if (person != null)
+        {
+        _Db.Entry(person).Property(p => p.IdDi).IsModified = false;
+        Mapper.Map(CurrentPersonDto, person); // Mapping DTO to Entity
+        _snackBar.Add($"پرسنل {CurrentPersonDto.Name} {CurrentPersonDto.Family} اصلاح شد", Severity.Success);
+        // person.Name = CurrentPersonDto.Name;
+        // person.Family = CurrentPersonDto.Family;
+        // person.Code = CurrentPersonDto.Code;
+        }
+        }
+        else
+        {
+        var newPerson = Mapper.Map<Person>(CurrentPersonDto); // Mapping DTO to Entity
+        CurrentHesabNo = 0;
+        _Db.Persons.Add(newPerson);
+        Persons.Add(newPerson);
+        _snackBar.Add($"پرسنل {CurrentPersonDto.Name} {CurrentPersonDto.Family} ثبت شد", Severity.Success);
 
-    }
-    //Persons.Count();
-    _Db.SaveChanges();
-    _logger.LogInformation($"پرسنل {CurrentPersonDto.Name} {CurrentPersonDto.Family} ثبت شد");
-    CancelEdit();
-    }
-    catch (DbUpdateException ex)
-    {
-    // اینجا خطاهایی که مربوط به مشکلات ذخیره‌سازی در پایگاه داده هستند مدیریت می‌شود
-    // مثلاً خطاهای مربوط به نقض محدودیت‌های پایگاه داده مانند unique constraint
+        }
+        //Persons.Count();
+        _Db.SaveChanges();
+        _logger.LogInformation($"پرسنل {CurrentPersonDto.Name} {CurrentPersonDto.Family} ثبت شد");
+        CancelEdit();
+        }
+        catch (DbUpdateException ex)
+        {
+        // اینجا خطاهایی که مربوط به مشکلات ذخیره‌سازی در پایگاه داده هستند مدیریت می‌شود
+        // مثلاً خطاهای مربوط به نقض محدودیت‌های پایگاه داده مانند unique constraint
 
-    // به کاربر پیام خطای مناسب نمایش داده می‌شود
+        // به کاربر پیام خطای مناسب نمایش داده می‌شود
 
-    _logger.LogError(ex, "خطایی در ذخیره‌سازی داده‌ها به پایگاه داده رخ داد.");
-    }
+        _logger.LogError(ex, "خطایی در ذخیره‌سازی داده‌ها به پایگاه داده رخ داد.");
+        }
     */
     }
 
@@ -474,6 +535,44 @@
 
     }
 
+    /// <summary>
+    /// این قسمت برای کنترل فونت برای نمایش اعداد است 
+    /// </summary>
+    /// <param name="newValue"></param>
+    private void OnValueChanged(long? newValue)
+    {
+        CurrentPersonAccountDto.V_Mojodi = newValue; // مقدار جدید را به پراپرتی اصلی اختصاص می‌دهیم
+        AdjustFontSize(newValue); // تغییر اندازه فونت
+    }
+    private void AdjustFontSize(long? mojodi)
+    {
+        if (mojodi.HasValue)
+        {
+            if (mojodi.Value >= 1000000000000) // برای مقادیر بزرگتر از 1 میلیون
+            {
+                _suitablefontStyle = "font-size: 14px"; // اندازه فونت کوچک‌تر
+            }
+            else if (mojodi.Value >= 10000000000) // برای مقادیر بزرگتر از 100 هزار
+            {
+                _suitablefontStyle = "font-size: 16px"; // اندازه فونت متوسط
+            }
+            else if (mojodi.Value >= 100000000) // برای مقادیر بزرگتر از 100 هزار
+            {
+                _suitablefontStyle = "font-size: 16px"; // اندازه فونت متوسط
+            }
+            else
+            {
+                _suitablefontStyle = "font-size: 19px"; // اندازه فونت عادی
+            }
+        }
+        else
+        {
+            _suitablefontStyle = "font-size: 19px"; // اندازه فونت برای مقادیر خالی
+        }
+    }
+
+
+
     private void OnPCodeChanged()
     {
         if (PCodeSearchable?.Length == 5)
@@ -584,4 +683,4 @@
         }
     */
 
-}
+}}

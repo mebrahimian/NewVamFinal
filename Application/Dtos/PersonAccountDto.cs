@@ -33,6 +33,7 @@ namespace VamBlazor.Client.Application.Dtos
         public int V_Day {  get; set; }  
         public int V_Month { get; set; }
         public int V_Year { get; set; }  
+        public long? V_Mojodi { get; set; }
         
 
         public string PcodePlaceHolder => "کدشخص را وارد کنید ";
