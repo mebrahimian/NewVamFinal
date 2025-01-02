@@ -1,0 +1,76 @@
+﻿@using Microsoft.EntityFrameworkCore.Metadata.Internal
+@using VamBlazor.Client.Domain.Entities
+@inherits LayoutComponentBase
+@inject NavigationManager Navigation
+@inject DatabaseContext _Db
+
+<MudPopoverProvider/>
+<MudDialogProvider />
+<MudSnackbarProvider/>
+<MudThemeProvider Theme="myTheme"/>
+<MudLayout Dir="rtl">
+    <MudAppBar Dense="true" Class="border-3" style="background-color:purple">
+        <MudTooltip Text="معرفی اشخاص" Color="Color.Tertiary" Placement="Placement.Bottom" Arrow="true">
+            <MudIconButton Icon="@Icons.Material.Filled.GroupAdd" Color="Color.Inherit" Edge="Edge.End" Class="mx-lg-5" OnClick="NavigateToPagePerson" />
+        </MudTooltip>
+        <MudTooltip Text="افتتاح حساب" Color="Color.Tertiary" Placement="Placement.Bottom" Arrow="true">
+            <MudIconButton Icon="@Icons.Material.Filled.CardMembership" Color="Color.Inherit" Edge="Edge.End" Class="mx-lg-5" OnClick="NavigateToPageAccount" />
+        </MudTooltip>
+        <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End" Class="mx-lg-5" />
+        <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End" Class="mx-lg-5" />
+        <MudSpacer />
+        <MudText Typo="Typo.h5">@SandoghDesc</MudText>
+        <MudSpacer />
+        <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End" Class="mx-lg-5" />
+        <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End" Class="mx-lg-5" />
+        <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End" Class="mx-lg-5" />
+        <MudTooltip Text="منوی سیستم" Placement="Placement.Top">
+            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => ToggleDrawer())" Class="mr-lg-5" />
+        </MudTooltip>
+    </MudAppBar>
+
+    <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always">
+        <NavMenu/>
+    </MudDrawer>
+
+    <MudMainContent>
+
+        @Body
+
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    private bool _drawerOpen = true;
+    private string? SandoghDesc;
+
+    private void ToggleDrawer()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+
+    private MudTheme myTheme = new MudTheme()
+        {
+            Typography = new Typography()
+            {
+                Default = new Default()
+                {
+                    FontFamily = ["VazirUI", "sans-serif"]
+
+                }
+            }
+
+
+
+
+        };
+
+    protected override async Task OnInitializedAsync()
+    {
+        SandoghDesc = _Db.Sandoghs.ToList().FirstOrDefault().Onvan;
+  
+    }
+    private void NavigateToPagePerson() => Navigation.NavigateTo("/formperson");
+    private void NavigateToPageAccount() => Navigation.NavigateTo("/formaccount");
+
+}

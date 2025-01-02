@@ -1,0 +1,526 @@
+﻿@page "/formperson"
+@inject IJSRuntime JS
+@inject DatabaseContext _Db
+@inject ILogger<FormPerson> _logger
+@inject VamBlazor.Client.Application.Services.PersonServices PersonServices
+@inject IMapper Mapper
+@inject NavigationManager Navigation
+@inject IDialogService DialogService
+@layout MainLayout
+
+@using AutoMapper
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.Extensions.Logging
+@using Serilog
+@using Serilog.Core
+@using VamBlazor.Client.Domain.Entities
+@using VamBlazor.Client.Domain.Enum
+@using MudBlazor
+@using VamBlazor.Client.Application.Dtos
+@using VamBlazor.Client.Application.Mappings
+@using VamBlazor.Client.Application.CommonFunc
+@using VamBlazor.Client.Shared.Dialogs
+@using VamBlazor.Client.Application.Services
+
+<MudContainer style="font-family:'VazirUI';" >
+
+    <MudPaper>
+        <MudText Typo="Typo.body2" Align="Align.Center" Style="height:25px;background-color:cadetblue" Class="mt-2">فرم ورود اطلاعات اشخاص</MudText>
+        <MudForm @ref="PersonForm" @bind-IsValid="isValid" Spacing="16" Class="p-4">
+            <MudRTLProvider RightToLeft="true">
+                <MudGrid>     
+                    <!-- ردیف اول: Code و City , Sex -->
+                    <MudItem xs="12" sm="6" md="3">
+                        <div style="width: 100px;">
+                            <MudTextField Label="کد سپرده گذار" Required Immediate="true"
+                            For="@(() => CurrentPersonDto.Code)"
+                            @bind-Value="PCodeSearchable"
+                            MaxLength="5"
+                            onkeyup="OnPCodeChanged"
+                            ErrorText="@GetErrorMessageForField(nameof(CurrentPersonDto.Code))" />
+                        </div>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <div style="width: 200px;">
+                            <MudSelect T="char" @bind-Value="CurrentPersonDto.City" Label="محل سکونت" Variant="Variant.Outlined">
+                                @foreach (CityEnum city in Enum.GetValues(typeof(CityEnum)))
+                                {
+                                    <MudSelectItem Value="@(Convert.ToChar(city))">@GetCityName(city)</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </div>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <div style="width: 100px;">
+                            <MudSelect T="char" @bind-Value="CurrentPersonDto.Sex" Label="جنسیت" Variant="Variant.Outlined">
+                                @foreach (SexEnum sex in Enum.GetValues(typeof(SexEnum)))
+                                {
+                                    <MudSelectItem Value="@(Convert.ToChar(sex))">@GetSex(sex)</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </div>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <div>
+                            <MudImage Src="@CurrentPersonPictureAddress" Alt="محل عکس" Elevation="25" Class="rounded-lg" Style="width:150px;height:150px" />
+                        </div>
+                    </MudItem>
+                    <!-- ردیف دوم: Name و Familyو Father و IssueNo -->
+                    <MudItem xs="12" sm="6" md="3">
+                        <div style="width: 200px;">
+                            <MudTextField Label="نام خانوادگی" Required 
+                            For="@(() => CurrentPersonDto.Family)"
+                            @bind-Value="CurrentPersonDto.Family"
+                            ErrorText="@GetErrorMessageForField(nameof(CurrentPersonDto.Family))" />
+                        </div>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <div style="width: 200px;">
+                            <MudTextField Label="نــــام" Required
+                            For="@(() => CurrentPersonDto.Name)"
+                            @bind-Value="CurrentPersonDto.Name"
+                            ErrorText="@GetErrorMessageForField(nameof(CurrentPersonDto.Name))" />
+                        </div>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <div style="width: 150px;">
+                            <MudTextField Label="نام پدر" @bind-Value="CurrentPersonDto.Father" />
+                        </div>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <div style="width: 150px;">
+                            <MudTextField Label="شماره شناسنامه" @bind-Value="CurrentPersonDto.IssueNo"  />
+                        </div>
+                    </MudItem>
+                    <!-- ردیف سوم: MelliCode و TelNoو bankType و HesabBank -->
+                    <MudItem xs="12" sm="6" md="3">
+                        <div style="width: 150px;">
+                            <MudTextField Label="کد ملی" @bind-Value="CurrentPersonDto.Mellicode" />
+                        </div>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <div style="width: 150px;">
+                            <MudTextField Label="شماره تماس" @bind-Value="CurrentPersonDto.Tel" InputType="InputType.Telephone" />
+                        </div>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <div style="width: 200px;">
+                            <MudSelect T="int?" @bind-Value="CurrentPersonDto.BankType" Label="نام بانک">
+                                @foreach (Bank bankitem in Banks)
+                                {
+                                    <MudSelectItem T="int?" Value="@bankitem.Id">@bankitem.BankName</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </div>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <div style="width: 150px;">
+                            <MudTextField Label="شماره حساب" @bind-Value="CurrentPersonDto.HesabBank" InputType="InputType.Text" />
+                        </div>
+                    </MudItem>
+                    <!-- ردیف چهارم: MelliCode و TelNoو bankType و HesabBank -->
+                    <MudItem xs="12" sm="6" md="3">
+                        <div style="width: 150px;">
+                            <MudTextField Label="شماره کارت" @bind-Value="CurrentPersonDto.CardBank" InputType="InputType.Text" />
+                        </div>
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <MudTextField Label="آدرس" @bind-Value="CurrentPersonDto.Address" Lines="2"/>
+                    </MudItem>
+
+                </MudGrid>
+
+            </MudRTLProvider>
+            <!-- دکمه‌ها -->
+            <div style="display: flex; gap: 10px;">
+                <MudButton style="width:30%" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Save" Color="Color.Primary" Disabled="@(!isValid)" OnClick="SavePerson">ذخیره</MudButton>
+                <MudButton style="width:30%" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Cancel" IconColor="Color.Tertiary" OnClick="CancelEdit">لغو</MudButton>
+                <MudButton style="width:30%" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.SpeakerNotes" IconColor="Color.Warning" OnClick="TogglePersonList">
+                    @(ShowPersonList ? "مخفی کردن لیست پرسنل" : "نمایش لیست پرسنل")
+                </MudButton>
+            </div>
+        </MudForm>
+
+
+    </MudPaper>
+
+    <MudSpacer />
+    @if (ShowPersonList)
+    {   <!--
+        <MudTable Items="@pagedData" Filter="FilterFunc" SortLabel="Sort by" Hover="true" Bordered="true" Dense="true" Pagination="true" RowsPerPage="5" @bind-Page="currentPage">
+        <MudTable Items="@peoples" Hover="true" SortLabel="Sort By" Filter="searchText" PageSize="10" @bind-SelectedItem="selectedPerson">
+        <MudTable Items="@filtere" Hover="true" SortLabel="Sort By" PageSize="10" @bind-SelectedItem="selectedPerson">
+        -->
+
+        <MudTable T="Person" Items="@Persons" Filter="new Func<Person,bool>(FilterFunction)" Pageable="true" Hover="true" Bordered="true" Striped="true" Dense="true">
+            <ToolBarContent>
+                <MudTextField @bind-Value="searchString1" Placeholder="جستجوی سپرده گذار" Immediate="true" OnKeyUp="OnSearchTextChanged" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh><MudTableSortLabel InitialDirection="SortDirection.Ascending" SortBy="new Func<Person, object>(x=>x.Code)"></MudTableSortLabel>کدشخص</MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<Person, object>(x=>x.Name)"></MudTableSortLabel>نـــام</MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<Person, object>(x=>x.Family)"></MudTableSortLabel>نام خانوادگی</MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<Person, object>(x=>x.Father)"></MudTableSortLabel>نام پدر</MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<Person, object>(x=>x.V_CityDesc)"></MudTableSortLabel> محل سکونت</MudTh>
+                <MudTh>عملیات</MudTh>
+            </HeaderContent>
+            <RowTemplate> 
+                <MudTd>@context.Code</MudTd>
+                <MudTd>@context.Name</MudTd>
+                <MudTd>@context.Family</MudTd>
+                <MudTd>@context.Father</MudTd>
+                <MudTd>@context.V_CityDesc</MudTd>
+
+                <MudTd>
+                    <MudFab title="اصلاح" Size="Size.Medium" Color="Color.Tertiary" StartIcon="@Icons.Material.Filled.Edit" IconSize="Size.Medium" Class="ma-2" OnClick="() => EditPerson(context)" />
+                    <MudFab title="حـذف" Size="Size.Medium" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Delete" IconSize="Size.Medium" Class="ma-2" OnClick="() => OpenDeleteDialog(context)" />
+                </MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100, int.MaxValue }"
+                RowsPerPageString="@rowsPerPageString"
+                InfoFormat="@infoFormat"
+                AllItemsText="@allItemsText"
+                HorizontalAlignment="@horizontalAlignment"
+                HideRowsPerPage="@hideRowsPerPage"
+                HidePageNumber="@hidePageNumber"
+                HidePagination="@hidePagination" />
+            </PagerContent>
+        </MudTable>
+    }
+</MudContainer>
+
+@code {
+    //  private string Data { get; set; }
+    //  private string ErrorMessage { get; set; }
+    private bool ShowPersonList { get; set; } = false;
+    private List<Person> Persons = new List<Person>();
+    private List<Bank> Banks = new List<Bank>();
+    private PersonDto CurrentPersonDto = new PersonDto();
+    private long CurrentPersonId;
+    private string CurrentPersonPictureAddress;
+    private bool IsEditing = false;
+    private bool isValid = false;
+    private MudForm? PersonForm;
+    //  private MudTextField<string> PersonCode;
+    private string? searchString1 = string.Empty;
+    private string? PCodeSearchable = string.Empty;
+
+    private HashSet<Person> selectedItems = new HashSet<Person>();
+
+    //Pagination Variables
+    private HorizontalAlignment horizontalAlignment = HorizontalAlignment.Right;
+    private bool hidePageNumber;
+    private bool hidePagination;
+    private bool hideRowsPerPage;
+    private string rowsPerPageString = "Rows per page:";
+    private string infoFormat = "{first_item}-{last_item} of {all_items}";
+    private string allItemsText = "All";
+
+    // loading Variable
+    private bool isLoading = false;
+    private int pageSize = 10;
+    private int currentPage = 0;
+
+
+
+
+    //Order Variable
+    private Func<Person, object> currentSortBy = p => p.Code; // فیلد پیش‌فرض برای مرتب‌سازی
+    private SortDirection currentSortDirection = SortDirection.Ascending;
+
+    protected override async Task OnInitializedAsync()
+    {   try
+        {
+
+            //  DatabaseContext Db = new DatabaseContext();
+            pageSize = _Db.Persons.Count();
+            Persons = _Db.Persons.Skip(currentPage * pageSize)
+                                .Take(pageSize).OrderBy(x => x.Code)
+                                .ToList();
+
+            Banks = _Db.Banks.ToList();
+
+            //  var text = Db.Persons.FirstOrDefault();
+            var text = new Person();
+            Mapper.Map(new Person(), CurrentPersonDto);
+            //   _logger.LogInformation("عملیات در حال انجام است.");
+
+        }
+        catch (HttpRequestException ex)
+        {
+            //  _logger.LogError(ex, "خطای غیرمنتظره در کامپوننت MyComponent.");
+
+        }
+        catch (Exception ex)
+        {
+            // _logger.LogError(ex, $"خطای عمومی: {ex.Message}");
+
+        }
+
+    }
+
+    // private bool FilterFunction(Person _person) => FilterFunc(_person, searchString1);
+    private bool FilterFunction(Person _person)
+    {
+        // بررسی null بودن searchString1
+        if (string.IsNullOrEmpty(searchString1))
+        {
+            // اگر searchString1 null یا خالی بود، می‌توانید نتیجه دلخواه را برگردانید یا بررسی کنید.
+            return true; // یا هر عمل دیگری که مناسب است
+        }
+
+        return FilterFunc(_person, searchString1);
+    }
+
+    private bool FilterFunc(Person _person, string searchString)
+    {
+        if (_person is null) return false;
+        if (string.IsNullOrWhiteSpace(searchString))
+            return true;
+        if (!string.IsNullOrEmpty(_person.Name) && _person.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (!string.IsNullOrEmpty(_person.Family) && _person.Family.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if ($"{_person.Code} {_person.Father} {_person.Mellicode}".Contains(searchString))
+            return true;
+        return false;
+    }
+    private void SavePerson()
+    {
+        try
+        {
+            if (IsEditing)
+            {
+                var person = _Db.Persons.FirstOrDefault(p => p.IdDi == CurrentPersonId);
+                if (person != null)
+                {
+                    _Db.Entry(person).Property(p => p.IdDi).IsModified = false;
+                    Mapper.Map(CurrentPersonDto, person); // Mapping DTO to Entity
+                    _snackBar.Add($" مشخصات {CurrentPersonDto.Name} {CurrentPersonDto.Family} اصلاح شد", Severity.Success);
+                    // person.Name = CurrentPersonDto.Name;
+                    // person.Family = CurrentPersonDto.Family;
+                    // person.Code = CurrentPersonDto.Code;
+                }
+            }
+            else
+            {
+                var newPerson = Mapper.Map<Person>(CurrentPersonDto); // Mapping DTO to Entity
+                CurrentPersonId = 0;
+                _Db.Persons.Add(newPerson);
+                Persons.Add(newPerson);
+                _snackBar.Add($"پرسنل {CurrentPersonDto.Name} {CurrentPersonDto.Family} ثبت شد", Severity.Success);
+
+            }
+            //Persons.Count();
+            _Db.SaveChanges();
+            _logger.LogInformation($"پرسنل {CurrentPersonDto.Name} {CurrentPersonDto.Family} ثبت شد");
+            CancelEdit();
+        }
+        catch (DbUpdateException ex)
+        {
+            // اینجا خطاهایی که مربوط به مشکلات ذخیره‌سازی در پایگاه داده هستند مدیریت می‌شود
+            // مثلاً خطاهای مربوط به نقض محدودیت‌های پایگاه داده مانند unique constraint
+
+            // به کاربر پیام خطای مناسب نمایش داده می‌شود
+
+            _logger.LogError(ex, "خطایی در ذخیره‌سازی داده‌ها به پایگاه داده رخ داد.");
+        }
+    }
+
+    private void EditPerson(Person person)
+    {
+        CurrentPersonDto = Mapper.Map<PersonDto>(person);
+        CurrentPersonId = person.IdDi;
+        PCodeSearchable = CurrentPersonDto.Code;
+        CurrentPersonPictureAddress = PersonServices.GetPersonPictureAddress(person.Code);
+
+        IsEditing = true;
+
+    }
+
+    private async Task OpenDeleteDialog(Person context)
+    {
+        var deleteContext = context.Name + " " + context.Family;
+        deleteContext = " برای حذف " + deleteContext + " مطمئن هستید؟ ";
+        // اینجا باید یک دیالوگ برای تایید حذف باز کنیم
+        var parameters = new DialogParameters
+            {
+                {nameof(Shared.Dialogs.DeleteConfirmationDialog.ContextText), deleteContext}
+            };
+
+        var dialog = DialogService.Show<DeleteConfirmationDialog>("حذف پرسنل", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            // اگر کاربر گزینه Yes را انتخاب کرده باشد، عملیات حذف انجام می‌شود
+            CurrentPersonId = context.IdDi;
+            var personToRemove = Persons.FirstOrDefault(p => p.IdDi == CurrentPersonId);
+            bool lHaveHesab = _Db.Hesabs.Any(hesab => hesab.Pcode == context.Code);
+            bool lHaveQvam = _Db.Qvams.Any(qvam => qvam.Pcode == context.Code);
+            bool lHavePardar = _Db.Pardars.Any(pardar => pardar.Pcode == context.Code);
+            if (personToRemove != null)
+            {
+                if (lHaveHesab || lHaveQvam || lHavePardar)  // در سایر جداول رکورد دارد
+                    _snackBar.Add($"مجاز به حذف {personToRemove.Name} {personToRemove.Family} نیستید ", Severity.Error);
+                else
+                {                    
+                    Persons.Remove(personToRemove);
+                    _Db.Remove(personToRemove);
+                    _Db.SaveChanges();
+                    _snackBar.Add($" {personToRemove.Name} {personToRemove.Family} حذف شد ", Severity.Warning);
+                }
+            }
+            else
+            {
+                // شخصی با این ID در لیست پیدا نشد
+                // می‌توانید اینجا لاگ یا پیام خاصی اضافه کنید
+            }
+
+        }
+    }
+
+    private void CancelEdit()
+    {
+        CurrentPersonDto = new PersonDto();
+        CurrentPersonId = 0;
+        CurrentPersonPictureAddress = PersonServices.GetPersonPictureAddress("000");
+        IsEditing = false;
+        PersonForm.ResetAsync();
+    }
+
+
+
+    // متدی برای دریافت پیغام خطا از داده‌های وارد شده
+    private string GetErrorMessageForField(string fieldName)
+    {
+        var context = new ValidationContext(CurrentPersonDto);
+        var validationResults = new List<ValidationResult>();
+
+        // اعتبارسنجی فیلد خاص
+        Validator.TryValidateProperty(
+            typeof(PersonDto).GetProperty(fieldName).GetValue(CurrentPersonDto),
+            new ValidationContext(CurrentPersonDto) { MemberName = fieldName },
+            validationResults
+        );
+
+        // اگر خطا وجود دارد، پیغام خطا را برمی‌گرداند
+        return validationResults.Any() ? validationResults.First().ErrorMessage : string.Empty;
+    }
+
+    // متدی برای ارسال فرم
+    private void HandleSubmit()
+    {
+        isValid = ValidateModel();
+    }
+
+    // اعتبارسنجی مدل
+    private bool ValidateModel()
+    {
+        var context = new ValidationContext(CurrentPersonDto);
+        var validationResults = new List<ValidationResult>();
+        return Validator.TryValidateObject(CurrentPersonDto, context, validationResults, true);
+    }
+    private string GetCityName(CityEnum city)  // Enum
+    {
+        return city switch
+        {
+            CityEnum.Shahroud => "شاهرود",
+            CityEnum.Gorgan => "گرگان",
+            CityEnum.Tehran => "تهران",
+            CityEnum.Other => "سایر",
+            _ => "نامشخص"
+        };
+    }
+
+    private string GetSex(SexEnum sex)
+    {
+        return sex switch
+        {
+            SexEnum.Male => "مرد",
+            SexEnum.Female => "زن",
+            _ => "نامشخص"
+        };
+    }
+    private void TogglePersonList()
+    {
+        ShowPersonList = !ShowPersonList;
+    }
+    private void SortTableByName()
+    {
+        currentSortBy = p => p.Name;
+        ToggleSortDirection();
+    }
+    private void ToggleSortDirection()
+    {
+        if (currentSortDirection == SortDirection.Ascending)
+        {
+            currentSortDirection = SortDirection.Descending;
+        }
+        else
+        {
+            currentSortDirection = SortDirection.Ascending;
+        }
+
+    }
+    /*
+    private void OnBlurFnc()
+    {
+    CurrentPersonPictureAddress = PersonServices.GetPersonPictureAddress(PCodeSearchable);
+    if (_Db.Persons.Any(p => p.Code == PCodeSearchable))   // کد پرسنل ثبت شده در صفحه وب اگر موجود بود پرشود
+        {
+        var personToEdit = Persons.FirstOrDefault(p => p.Code == PCodeSearchable);
+        CurrentPersonDto = Mapper.Map<PersonDto>(personToEdit);
+    CurrentPersonId = personToEdit.IdDi;
+
+    }
+    }
+    */
+    //
+    //   کنترل فیلد کدپرسنل که بعد ار تایپ 5 حرف ازفیلد خارج شود
+    //
+    /*
+    private async Task OnInputChange()
+    {
+    //await Task.Delay(0);
+
+    // وقتی ورودی به 5 کاراکتر رسید
+    if (CurrentPersonDto.Code?.Length >= 4)
+        {
+        // فیلد به طور خودکار از حالت فوکوس خارج می‌شود
+        await JS.InvokeVoidAsync("blurElement", "InputData");
+    }
+    }
+    */
+    private void OnPCodeChanged()
+    {
+        if (PCodeSearchable?.Length == 5)
+        {
+            CurrentPersonPictureAddress = PersonServices.GetPersonPictureAddress(PCodeSearchable);
+            if (_Db.Persons.Any(p => p.Code == PCodeSearchable))   // کد پرسنل ثبت شده در صفحه وب اگر موجود بود پرشود
+            {
+                var personToEdit = Persons.FirstOrDefault(p => p.Code == PCodeSearchable);
+                CurrentPersonDto = Mapper.Map<PersonDto>(personToEdit);
+                CurrentPersonId = personToEdit.IdDi;
+                IsEditing = true;
+
+            }
+            else{
+                Mapper.Map(new Person(), CurrentPersonDto);
+                CurrentPersonId = 0;
+                IsEditing = false;
+            }
+        }
+    }
+    private void OnSearchTextChanged()
+    {
+        if (!string.IsNullOrEmpty(searchString1))
+        {
+            searchString1 = TextHelper.NormalizeString(searchString1);
+        }
+    }
+}
+    
+
