@@ -183,10 +183,7 @@
                 RowsPerPageString="@rowsPerPageString"
                 InfoFormat="@infoFormat"
                 AllItemsText="@allItemsText"
-                HorizontalAlignment="@horizontalAlignment"
-                HideRowsPerPage="@hideRowsPerPage"
-                HidePageNumber="@hidePageNumber"
-                HidePagination="@hidePagination" />
+                HorizontalAlignment="@horizontalAlignment"  />
             </PagerContent>
         </MudTable>
     }
@@ -200,7 +197,7 @@
     private List<Bank> Banks = new List<Bank>();
     private PersonDto CurrentPersonDto = new PersonDto();
     private long CurrentPersonId;
-    private string CurrentPersonPictureAddress;
+    private string CurrentPersonPictureAddress = string.Empty;
     private bool IsEditing = false;
     private bool isValid = false;
     private MudForm? PersonForm;
@@ -212,9 +209,7 @@
 
     //Pagination Variables
     private HorizontalAlignment horizontalAlignment = HorizontalAlignment.Right;
-    private bool hidePageNumber;
-    private bool hidePagination;
-    private bool hideRowsPerPage;
+  
     private string rowsPerPageString = "Rows per page:";
     private string infoFormat = "{first_item}-{last_item} of {all_items}";
     private string allItemsText = "All";
@@ -241,7 +236,7 @@
                                 .Take(pageSize).OrderBy(x => x.Code)
                                 .ToList();
 
-            Banks = _Db.Banks.ToList();
+           //   Banks = _Db.Banks.ToList();
 
             //  var text = Db.Persons.FirstOrDefault();
             var text = new Person();
@@ -251,12 +246,12 @@
         }
         catch (HttpRequestException ex)
         {
-            //  _logger.LogError(ex, "خطای غیرمنتظره در کامپوننت MyComponent.");
+              _logger.LogError(ex, "خطای غیرمنتظره در کامپوننت MyComponent.");
 
         }
         catch (Exception ex)
         {
-            // _logger.LogError(ex, $"خطای عمومی: {ex.Message}");
+             _logger.LogError(ex, $"خطای عمومی: {ex.Message}");
 
         }
 
@@ -353,9 +348,8 @@
 
         var dialog = DialogService.Show<DeleteConfirmationDialog>("حذف پرسنل", parameters);
         var result = await dialog.Result;
-
-        if (!result.Canceled)
-        {
+        if (!result?.Canceled == false)
+         {
             // اگر کاربر گزینه Yes را انتخاب کرده باشد، عملیات حذف انجام می‌شود
             CurrentPersonId = context.IdDi;
             var personToRemove = Persons.FirstOrDefault(p => p.IdDi == CurrentPersonId);
@@ -389,10 +383,8 @@
         CurrentPersonId = 0;
         CurrentPersonPictureAddress = PersonServices.GetPersonPictureAddress("000");
         IsEditing = false;
-        PersonForm.ResetAsync();
+        PersonForm?.ResetAsync();
     }
-
-
 
     // متدی برای دریافت پیغام خطا از داده‌های وارد شده
     private string GetErrorMessageForField(string fieldName)
@@ -451,7 +443,7 @@
     }
     private void SortTableByName()
     {
-        currentSortBy = p => p.Name;
+        currentSortBy = p => p.Name ?? "";
         ToggleSortDirection();
     }
     private void ToggleSortDirection()

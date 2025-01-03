@@ -43,7 +43,7 @@ namespace VamBlazor.Client.Domain.Entities
 
         public string? HesabBank { get; set; }
         [NotMapped]
-        public string? V_CityDesc => CodeToStringFunctions.GetCityDesc(City);
+        public string? V_CityDesc => CodeToStringFunctions.GetCityDesc(City ?? "1");
     
     }
 }

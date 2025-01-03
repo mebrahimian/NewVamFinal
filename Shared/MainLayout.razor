@@ -67,7 +67,8 @@
 
     protected override async Task OnInitializedAsync()
     {
-        SandoghDesc = _Db.Sandoghs.ToList().FirstOrDefault().Onvan;
+        var sandogh = _Db.Sandoghs?.FirstOrDefault();
+        SandoghDesc = sandogh?.Onvan ;
   
     }
     private void NavigateToPagePerson() => Navigation.NavigateTo("/formperson");

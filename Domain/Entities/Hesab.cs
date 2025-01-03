@@ -32,7 +32,7 @@ namespace VamBlazor.Client.Domain.Entities
         [NotMapped]
         public int V_Day => DateFunctions.GetDay(Date);
         [NotMapped]
-        public int V_Month => DateFunctions.GetMonth(Date);
+        public int V_Month => DateFunctions.GetMonth(Date) ;
         [NotMapped]
         public int V_Year => DateFunctions.GetYear(Date);
         [NotMapped]

@@ -176,17 +176,17 @@
                         </div>
                     </MudItem>
 
-                    <MudItem xs="12" sm="6" md="3">
-                        <div style="width: 100px">
-                            <MudTextField Label="حساب معرف" Immediate="true"
+                    <MudItem xs="12" sm="6" md="3" >
+                        <div style="width: 75%;align-content:start" class="mr-20">
+                            <MudTextField Label="حساب معرف" Immediate="true"  
                             For="@(() => CurrentPersonAccountDto.IdDi)"
                             @bind-Value="CurrentPersonAccountDto.IdDi"
                             onblur="OnMoarefChanged"
-                            ErrorText="@GetErrorMessageForField(nameof(CurrentPersonAccountDto.Pcode))" />
+                            ErrorText="@GetErrorMessageForField(nameof(CurrentPersonAccountDto.IdDi))" />
                         </div>
                     </MudItem>
                     <MudItem xs="12" sm="6" md="3">
-
+                        <MudText Typo="Typo.h5" class="mr-n20 mt-5" Style="background-color:azure;">@_MoarefDesc</MudText>
                     </MudItem>
                     <!-- ردیف چهارم: MelliCode و TelNoو bankType و HesabBank -->
                     <MudItem xs="12" sm="6" md="3">
@@ -251,10 +251,7 @@
                 RowsPerPageString="@rowsPerPageString"
                 InfoFormat="@infoFormat"
                 AllItemsText="@allItemsText"
-                HorizontalAlignment="@horizontalAlignment"
-                HideRowsPerPage="@hideRowsPerPage"
-                HidePageNumber="@hidePageNumber"
-                HidePagination="@hidePagination" />
+                HorizontalAlignment="@horizontalAlignment" />
             </PagerContent>
         </MudTable>
     }
@@ -277,21 +274,20 @@
     private PersonAccountDto CurrentPersonAccountDto = new PersonAccountDto();
 
     private string? CurrentPersonPictureAddress;
-    private bool IsEditing = false;
-    private bool isValid = false;
+    private bool IsEditing;
+    private bool isValid;
     private MudForm? PersonsAccountForm;
     // private MudTextField<string> PersonCode;
     private string? searchString1 = string.Empty;
     private string? PCodeSearchable = string.Empty;
     private long HesabNoSearchable = 0;
+    private string? _MoarefDesc = string.Empty;
 
     private HashSet<Person> selectedItems = new HashSet<Person>();
 
     //Pagination Variables
     private HorizontalAlignment horizontalAlignment = HorizontalAlignment.Right;
-    private bool hidePageNumber;
-    private bool hidePagination;
-    private bool hideRowsPerPage;
+
     private string rowsPerPageString = "Rows per page:";
     private string infoFormat = "{first_item}-{last_item} of {all_items}";
     private string allItemsText = "All";
@@ -312,6 +308,11 @@
     {
         try
         {
+            if (_Db?.Persons == null || _Db?.Hesabs == null)
+            {
+                return; // خروج از متد اگر هیچ داده‌ای وجود نداشته باشد
+            }
+
             pageSize = _Db.Persons.Count();
             var query = (from person in _Db.Persons
                          join account in _Db.Hesabs on person.Code equals account.Pcode
@@ -319,8 +320,8 @@
                          select new PersonAccountDto
                              {
                                  FullName = (string.IsNullOrEmpty(person.Name) ? "" : person.Name.Trim()) + " " +
-                                                        (string.IsNullOrEmpty(person.Family) ? "" : person.Family.Trim()) + "(" +
-                                                        (string.IsNullOrEmpty(person.Father) ? "" : person.Father.Trim()) + ")",
+                                                                            (string.IsNullOrEmpty(person.Family) ? "" : person.Family.Trim()) + "(" +
+                                                                            (string.IsNullOrEmpty(person.Father) ? "" : person.Father.Trim()) + ")",
                                  Family = person.Family,
                                  Name = person.Name,
                                  Father = person.Father,
@@ -343,38 +344,49 @@
             .Take(pageSize)  // تعداد رکوردهای هر صفحه
             .ToList();  // تبدیل به لیست
 
+            if (query != null && query.Any())
+            {
+                _personAccountList = query;
+            }
+            if (CurrentPersonAccountDto != null)
+            {
+                Mapper.Map(new PersonAccountDto(), CurrentPersonAccountDto);
+            }
 
-            _personAccountList = query;
-
-            //  var text = Db.Persons.FirstOrDefault();
-            // var text = new PersonAccountDto();
-            Mapper.Map(new PersonAccountDto(), CurrentPersonAccountDto);
         }
         catch (HttpRequestException ex)
         {
-            //  _logger.LogError(ex, "خطای غیرمنتظره در کامپوننت MyComponent.");
+
+            // اگر InnerException موجود است
+            if (ex.InnerException != null)
+            {
+                Console.WriteLine($"Inner exception: {ex.InnerException.Message}");
+            }
 
         }
         catch (Exception ex)
         {
-            // _logger.LogError(ex, $"خطای عمومی: {ex.Message}");
+            Console.WriteLine($"An unexpected error occurred: {ex.Message}");
 
         }
 
     }
 
-    private bool FilterFunction(PersonAccountDto _personAccount) => FilterFunc(_personAccount, searchString1);
+    private bool FilterFunction(PersonAccountDto _personAccount) => FilterFunc(_personAccount, searchString1 ?? "");
 
     private bool FilterFunc(PersonAccountDto _personAccount, string searchString)
     {
         if (string.IsNullOrWhiteSpace(searchString))
             return true;
-        if (_personAccount.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase))
-            return true;
-        if (_personAccount.Family.Contains(searchString, StringComparison.OrdinalIgnoreCase))
-            return true;
-        if ($"{_personAccount.Pcode} {_personAccount.Father} {_personAccount.HesabNo}".Contains(searchString))
-            return true;
+        if (_personAccount != null)
+        {
+            if (_personAccount.Name != null && _personAccount.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                return true;
+            if (_personAccount.Family != null && _personAccount.Family.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                return true;
+            if ($"{_personAccount.Pcode} {_personAccount.Father} {_personAccount.HesabNo}".Contains(searchString))
+                return true;
+        }
         return false;
     }
     private void SavePerson()
@@ -426,7 +438,14 @@
         CurrentPersonAccountDto = Mapper.Map<PersonAccountDto>(personaccountdto);
         HesabNoSearchable = personaccountdto.HesabNo;
         HesabNoSearchable = CurrentPersonAccountDto.HesabNo;
+        PCodeSearchable = CurrentPersonAccountDto.Pcode;
+        var MoarefCode = CurrentPersonAccountDto.IdDi;
         IsEditing = true;
+        if (personaccountdto.IdDi != 0)
+        {
+            _MoarefDesc = _personAccountList?.FirstOrDefault(p => p.HesabNo == MoarefCode)?.FullName;
+        }
+        
 
     }
 
@@ -443,7 +462,7 @@
         var dialog = DialogService.Show<DeleteConfirmationDialog>("حذف حساب", parameters);
         var result = await dialog.Result;
 
-        if (!result.Canceled)
+        if (!result?.Canceled == false)
         {
             // اگر کاربر گزینه Yes را انتخاب کرده باشد، عملیات حذف انجام می‌شود
             HesabNoSearchable = context.HesabNo;
@@ -489,11 +508,12 @@
         var validationResults = new List<ValidationResult>();
 
         // اعتبارسنجی فیلد خاص
+
         Validator.TryValidateProperty(
             typeof(PersonAccountDto).GetProperty(fieldName).GetValue(CurrentPersonAccountDto),
             new ValidationContext(CurrentPersonAccountDto) { MemberName = fieldName },
-            validationResults
-        );
+            validationResults);
+
 
         // اگر خطا وجود دارد، پیغام خطا را برمی‌گرداند
         return validationResults.Any() ? validationResults.First().ErrorMessage : string.Empty;
@@ -509,7 +529,8 @@
     private bool ValidateModel()
     {
         var context = new ValidationContext(CurrentPersonAccountDto);
-        var validationResults = new List<ValidationResult>();
+        var validationResults = new List<ValidationResult>
+    ();
         return Validator.TryValidateObject(CurrentPersonAccountDto, context, validationResults, true);
     }
 
@@ -519,7 +540,7 @@
     }
     private void SortTableByName()
     {
-        currentSortBy = p => p.Name;
+        currentSortBy = p => p.Name ?? "";
         ToggleSortDirection();
     }
     private void ToggleSortDirection()
@@ -548,9 +569,13 @@
                     if (_Db.Hesabs.Any(p => p.Pcode == PCodeSearchable))   // کد حساب ثبت شده در صفحه وب اگر موجود بود پرشود
                     {
                         var accountToEdit = _personAccountList.FirstOrDefault(p => p.Pcode == PCodeSearchable);
-                        CurrentPersonAccountDto = Mapper.Map<PersonAccountDto>(accountToEdit);
-                        HesabNoSearchable = accountToEdit.HesabNo;
-                        IsEditing = true;
+                        if (accountToEdit != null)
+                        {
+                            CurrentPersonAccountDto = Mapper.Map<PersonAccountDto>
+                                (accountToEdit);
+                            HesabNoSearchable = accountToEdit.HesabNo;
+                            IsEditing = true;
+                        }
                     }
                     else
                     {
@@ -590,11 +615,11 @@
             var Pcode = personAccount.Pcode;
             if (Pcode != PCodeSearchable)
             {
-                _snackBar.Add($" حساب متعلق به {personAccount.FullName} می باشد", Severity.Success);
+                _snackBar.Add($" حساب متعلق به {personAccount.FullName} می باشد", Severity.Warning);
                 HesabNoSearchable = CurrentPersonAccountDto.HesabNo;
             }
         }
-        
+
     }
 
     private void OnSearchTextChanged()
@@ -606,73 +631,68 @@
     }
     private void OnMoarefChanged()
     {
-        if (PCodeSearchable?.Length == 5)
+        if (CurrentPersonAccountDto.IdDi != 0 )
         {
-            CurrentPersonPictureAddress = PersonServices.GetPersonPictureAddress(PCodeSearchable);
-            if (_Db.Persons.Any(p => p.Code == PCodeSearchable))   // چک وجود پرسنل
+            if (_personAccountList.Any(p => p.HesabNo == CurrentPersonAccountDto.IdDi))   // کد معرف در فایل حساب یافت شد
             {
-                if (_Db.Hesabs.Any(p => p.Pcode == PCodeSearchable))   // کد حساب ثبت شده در صفحه وب اگر موجود بود پرشود
+                if (CurrentPersonAccountDto.IdDi == HesabNoSearchable)
                 {
-                    var accountToEdit = _personAccountList.FirstOrDefault(p => p.Pcode == PCodeSearchable);
-                    CurrentPersonAccountDto = Mapper.Map<PersonAccountDto>(accountToEdit);
-                    HesabNoSearchable = accountToEdit.HesabNo;
-                    IsEditing = true;
+                    _snackBar.Add($" معرف مجاز نیست", Severity.Error);
+                    CurrentPersonAccountDto.IdDi = 0;
                 }
-                else
+                else 
                 {
-                    Mapper.Map(new Person(), CurrentPersonAccountDto);
-                    HesabNoSearchable = 0;
-                    IsEditing = false;
+                    _MoarefDesc = _personAccountList.FirstOrDefault(p => p.HesabNo == CurrentPersonAccountDto.IdDi).FullName ?? "";
                 }
             }
             else
             {
-                _snackBar.Add(" سپرده گذار یافت نشد ", Severity.Warning);
-                Mapper.Map(new PersonAccountDto(), CurrentPersonAccountDto);
-                PCodeSearchable = "";
-                IsEditing = false;
-                CancelEdit();
+                _snackBar.Add($" معرف یافت نشد", Severity.Error);
+                CurrentPersonAccountDto.IdDi = 0;
+                _MoarefDesc = "";
+
             }
-        }
+
+         }
     }
     /*
     private void OnBlurFnc()
+    {
+    if (!string.IsNullOrEmpty(PersonCode.Value))
+    {
+    CurrentPersonPictureAddress = PersonServices.GetPersonPictureAddress(PersonCode?.Value);
+    if (_Db.Hesabs.Any(p => p.Pcode == PersonCode.Value))   // کد پرسنل ثبت شده در صفحه وب اگر در فایل حساب موجود بود پرشود
+    {
+    var HesabInfo = _Db.Hesabs.FirstOrDefault(p => p.Pcode == PersonCode.Value);
+    var HesabId = HesabInfo.HesabNo;
+    var personaccountToEdit = _personAccountList.FirstOrDefault(p => p.HesabNo == HesabId);
+    CurrentPersonAccountDto = Mapper.Map<PersonAccountDto>
+        (personaccountToEdit);
+        CurrentHesabNo = personaccountToEdit.HesabNo;
+
+        }
+        else
         {
-        if (!string.IsNullOrEmpty(PersonCode.Value))
-            {
-            CurrentPersonPictureAddress = PersonServices.GetPersonPictureAddress(PersonCode?.Value);
-            if (_Db.Hesabs.Any(p => p.Pcode == PersonCode.Value))   // کد پرسنل ثبت شده در صفحه وب اگر در فایل حساب موجود بود پرشود
-                {
-                var HesabInfo = _Db.Hesabs.FirstOrDefault(p => p.Pcode == PersonCode.Value);
-                var HesabId = HesabInfo.HesabNo;
-                var personaccountToEdit = _personAccountList.FirstOrDefault(p => p.HesabNo == HesabId);
-                CurrentPersonAccountDto = Mapper.Map<PersonAccountDto>(personaccountToEdit);
-                CurrentHesabNo = personaccountToEdit.HesabNo;
+        //_snackBar.Add(" کد سپرده گذار یافت نشد ", Severity.Success, config => { config.HideIcon = true; config.VisibleStateDuration = 4000;  });
+        _snackBar.Add(" کد سپرده گذار یافت نشد ", Severity.Success);
+        //  PersonCode.Value = "";
+        //  Mapper.Map(new PersonAccountDto(), CurrentPersonAccountDto);
+        //  CancelEdit();
 
-                }
-                else
-                {
-                //_snackBar.Add(" کد سپرده گذار یافت نشد ", Severity.Success, config => { config.HideIcon = true; config.VisibleStateDuration = 4000;  });
-                _snackBar.Add(" کد سپرده گذار یافت نشد ", Severity.Success);
-              //  PersonCode.Value = "";
-              //  Mapper.Map(new PersonAccountDto(), CurrentPersonAccountDto);
-              //  CancelEdit();
-
-    }
+        }
     }
     }
     */
     /*
     private bool searchText()
-        {
-        Persons = Persons.Where(x => string.IsNullOrEmpty(searchString) ||
-                                        x.Family.Contains(searchString, StringComparison.InvariantCultureIgnoreCase) ||
-                                        x.Name.Contains(searchString, StringComparison.InvariantCultureIgnoreCase))
-                            .Skip(currentPage * 5)
+    {
+    Persons = Persons.Where(x => string.IsNullOrEmpty(searchString) ||
+    x.Family.Contains(searchString, StringComparison.InvariantCultureIgnoreCase) ||
+    x.Name.Contains(searchString, StringComparison.InvariantCultureIgnoreCase))
+    .Skip(currentPage * 5)
     .Take(5)
-        .ToList();
-            return true;
-                }
+    .ToList();
+    return true;
+    }
     */
-
 }}

@@ -2,6 +2,7 @@
 @layout MainLayout
 @inject DatabaseContext _Db
 @using DAL
+@using Microsoft.EntityFrameworkCore
 
 
 
@@ -21,7 +22,8 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var text = _Db.Persons.FirstOrDefault(p => p.Code == "00035");
-        currentCount = (int)text.IdDi;
+        var text = _Db.Persons.FirstOrDefaultAsync(p => p.Code == "00035");
+
+        if (text != null)  currentCount = 100;
     }
 }

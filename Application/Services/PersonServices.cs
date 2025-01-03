@@ -8,7 +8,7 @@
             if (string.IsNullOrEmpty(personCode))
             {
                 // در صورتی که PersonCode مقدار ندارد
-                return null;  // یا می‌توانید یک مسیر پیش‌فرض بازگردانید
+                return "";  // یا می‌توانید یک مسیر پیش‌فرض بازگردانید
             }
             string[] extensions = { ".jpg", ".Jpeg",".png", ".gif" };
             foreach (var ext in extensions)
