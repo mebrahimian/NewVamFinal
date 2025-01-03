@@ -41,18 +41,20 @@
                     </div>
                     <div style="width: 400px">
                         <MudItem xs="12" sm="6" md="3">
-                            <div class= "mt-3" style="width: 400px">
+                            <div class="mt-3" style="width: 400px">
                                 <MudText Typo="Typo.h5" Style="background-color:azure;padding-right:10px">@CurrentPersonAccountDto.FullName</MudText>
                             </div>
                         </MudItem>
                     </div>
                     <MudItem xs="12" sm="6" md="3" Class="pr-10 pt-0">
-                        @if (CurrentPersonAccountDto.Curqty != 0) {
-                            @if (CurrentPersonAccountDto.V_Mojodi > 10000000000) {
-                                <MudNumericField T="long?" 
-                                @bind-Value="CurrentPersonAccountDto.V_Mojodi"  
+                        @if (CurrentPersonAccountDto.Curqty != 0)
+                        {
+                            @if (CurrentPersonAccountDto.V_Mojodi > 10000000000)
+                            {
+                                <MudNumericField T="long?"
+                                @bind-Value="CurrentPersonAccountDto.V_Mojodi"
                                 Format="###,###"
-                                Adornment="Adornment.End" 
+                                Adornment="Adornment.End"
                                 AdornmentText="ریال"
                                 Label="موجودی"
                                 Variant="Variant.Outlined"
@@ -72,7 +74,8 @@
                                 HideSpinButtons="true"
                                 Style="font-size:20px"
                                 readonly="true" />
-                            } else 
+                            }
+                            else
                             {
                                 <MudNumericField T="long?"
                                 @bind-Value="CurrentPersonAccountDto.V_Mojodi"
@@ -96,9 +99,13 @@
                     <!-- ردیف دوم: Name و Familyو Father و IssueNo -->
                     <MudItem xs="12" sm="6" md="3">
                         <div class="mt-n6" style="display: flex;font-size: 18px; font-weight: bold;">
-                            <MudTextField Style="justify-content:right;width:65%" 
-                            Label="شماره حساب" @bind-Value="CurrentPersonAccountDto.HesabNo" 
-                            InputType="InputType.Text" />
+                            <MudTextField Style="justify-content:right;width:65%"
+                            Label="شماره حساب"
+                            Required Immediate="true"
+                            For="@(() => CurrentPersonAccountDto.HesabNo)"
+                            @bind-Value="HesabNoSearchable"
+                            InputType="InputType.Text"
+                            OnBlur="OnAccountChanged" />
                             <MudText Style="justify-content:left;width:45%" Class="mt-5 ml-n3">تاریخ افتتاح :</MudText>
                         </div>
                     </MudItem>
@@ -143,7 +150,7 @@
 
                     </MudItem>
                     <MudItem xs="12" sm="6" md="3">
-                        <div>                            
+                        <div>
                             <MudImage Src="@CurrentPersonPictureAddress" Alt="محل عکس" Elevation="25" Class="rounded-lg mt-n16" Style="width:150px;height:150px" />
                         </div>
                     </MudItem>
@@ -259,27 +266,16 @@
     /// <summary>
     /// این قسمت برای تنظیم فونت برای نمایش اعداد کاربرد دارد
     /// </summary>
-    private string _suitablefontStyle = "font-size: 19px"; // اندازه فونت اولیه
-    private long? _mojodi;
-    public long? CurrentPersonAccountDto_V_Mojodi
-    {
-        get => _mojodi;
-        set
-        {
-            _mojodi = value;
-            AdjustFontSize(_mojodi); // وقتی مقدار تغییر کرد، اندازه فونت تنظیم می‌شود
-        }
-    }
-    ///   end <summary>
-    /// 
-    /// 
+
+    ///
+    ///
 
     private bool ShowPersonList { get; set; } = false;
     private List<Person> Persons = new List<Person>();
     private List<PersonAccountDto> _personAccountList = new List<PersonAccountDto>();
     //   private PersonDto CurrentPersonDto = new PersonDto();
     private PersonAccountDto CurrentPersonAccountDto = new PersonAccountDto();
-    private long CurrentHesabNo;
+
     private string? CurrentPersonPictureAddress;
     private bool IsEditing = false;
     private bool isValid = false;
@@ -287,6 +283,7 @@
     // private MudTextField<string> PersonCode;
     private string? searchString1 = string.Empty;
     private string? PCodeSearchable = string.Empty;
+    private long HesabNoSearchable = 0;
 
     private HashSet<Person> selectedItems = new HashSet<Person>();
 
@@ -322,8 +319,8 @@
                          select new PersonAccountDto
                              {
                                  FullName = (string.IsNullOrEmpty(person.Name) ? "" : person.Name.Trim()) + " " +
-                                                (string.IsNullOrEmpty(person.Family) ? "" : person.Family.Trim()) + "(" +
-                                                (string.IsNullOrEmpty(person.Father) ? "" : person.Father.Trim()) + ")",
+                                                        (string.IsNullOrEmpty(person.Family) ? "" : person.Family.Trim()) + "(" +
+                                                        (string.IsNullOrEmpty(person.Father) ? "" : person.Father.Trim()) + ")",
                                  Family = person.Family,
                                  Name = person.Name,
                                  Father = person.Father,
@@ -338,8 +335,8 @@
                                  P1 = account.P1,
                                  IdDi = account.IdDi,
                                  V_Day = account.V_Day,
-                                 V_Month=account.V_Month,
-                                 V_Year= account.V_Year,
+                                 V_Month = account.V_Month,
+                                 V_Year = account.V_Year,
                                  V_Mojodi = account.V_Mojodi
                              })
             .Skip(currentPage * pageSize)  // صفحه بندی
@@ -427,8 +424,8 @@
     private void EditPerson(PersonAccountDto personaccountdto)
     {
         CurrentPersonAccountDto = Mapper.Map<PersonAccountDto>(personaccountdto);
-        CurrentHesabNo = personaccountdto.HesabNo;
-        CurrentHesabNo = CurrentPersonAccountDto.HesabNo;
+        HesabNoSearchable = personaccountdto.HesabNo;
+        HesabNoSearchable = CurrentPersonAccountDto.HesabNo;
         IsEditing = true;
 
     }
@@ -449,8 +446,8 @@
         if (!result.Canceled)
         {
             // اگر کاربر گزینه Yes را انتخاب کرده باشد، عملیات حذف انجام می‌شود
-            CurrentHesabNo = context.HesabNo;
-            var hesabToRemove = _personAccountList.FirstOrDefault(p => p.HesabNo == CurrentHesabNo);
+            HesabNoSearchable = context.HesabNo;
+            var hesabToRemove = _personAccountList.FirstOrDefault(p => p.HesabNo == HesabNoSearchable);
             bool lHaveQvam = _Db.Qvams.Any(qvam => qvam.Pcode == context.Pcode);
             bool lHavePardar = _Db.Pardars.Any(pardar => pardar.Pcode == context.Pcode);
             if (hesabToRemove != null)
@@ -477,7 +474,7 @@
     private void CancelEdit()
     {
         CurrentPersonAccountDto = new PersonAccountDto();
-        CurrentHesabNo = 0;
+        HesabNoSearchable = 0;
         CurrentPersonPictureAddress = PersonServices.GetPersonPictureAddress("000");
         IsEditing = false;
         PersonsAccountForm?.ResetAsync();
@@ -538,41 +535,6 @@
 
     }
 
-    /// <summary>
-    /// این قسمت برای کنترل فونت برای نمایش اعداد است 
-    /// </summary>
-    /// <param name="newValue"></param>
-    private void OnValueChanged(long? newValue)
-    {
-        CurrentPersonAccountDto.V_Mojodi = newValue; // مقدار جدید را به پراپرتی اصلی اختصاص می‌دهیم
-        AdjustFontSize(newValue); // تغییر اندازه فونت
-    }
-    private void AdjustFontSize(long? mojodi)
-    {
-        if (mojodi.HasValue)
-        {
-            if (mojodi.Value >= 1000000000000) // برای مقادیر بزرگتر از 1 میلیون
-            {
-                _suitablefontStyle = "font-size: 14px"; // اندازه فونت کوچک‌تر
-            }
-            else if (mojodi.Value >= 10000000000) // برای مقادیر بزرگتر از 100 هزار
-            {
-                _suitablefontStyle = "font-size: 16px"; // اندازه فونت متوسط
-            }
-            else if (mojodi.Value >= 100000000) // برای مقادیر بزرگتر از 100 هزار
-            {
-                _suitablefontStyle = "font-size: 16px"; // اندازه فونت متوسط
-            }
-            else
-            {
-                _suitablefontStyle = "font-size: 19px"; // اندازه فونت عادی
-            }
-        }
-        else
-        {
-            _suitablefontStyle = "font-size: 19px"; // اندازه فونت برای مقادیر خالی
-        }
-    }
 
     private void OnPCodeChanged()
     {
@@ -587,13 +549,13 @@
                     {
                         var accountToEdit = _personAccountList.FirstOrDefault(p => p.Pcode == PCodeSearchable);
                         CurrentPersonAccountDto = Mapper.Map<PersonAccountDto>(accountToEdit);
-                        CurrentHesabNo = accountToEdit.HesabNo;
+                        HesabNoSearchable = accountToEdit.HesabNo;
                         IsEditing = true;
                     }
                     else
                     {
                         Mapper.Map(new Person(), CurrentPersonAccountDto);
-                        CurrentHesabNo = 0;
+                        HesabNoSearchable = 0;
                         IsEditing = false;
                     }
                 }
@@ -606,7 +568,7 @@
                     CancelEdit();
                 }
             }
-            else 
+            else
             {
                 _snackBar.Add($"  فیلد باید فقط عددی باشد", Severity.Warning);
                 PCodeSearchable = "";
@@ -614,6 +576,25 @@
                 CancelEdit();
             }
         }
+    }
+
+    private void OnAccountChanged()
+    {
+        ///
+        ///   کنترل اینکه طرف حساب دارد یا نه
+        ///
+
+        var personAccount = _personAccountList.FirstOrDefault(p => p.HesabNo == HesabNoSearchable);
+        if (personAccount != null)
+        {
+            var Pcode = personAccount.Pcode;
+            if (Pcode != PCodeSearchable)
+            {
+                _snackBar.Add($" حساب متعلق به {personAccount.FullName} می باشد", Severity.Success);
+                HesabNoSearchable = CurrentPersonAccountDto.HesabNo;
+            }
+        }
+        
     }
 
     private void OnSearchTextChanged()
@@ -634,13 +615,13 @@
                 {
                     var accountToEdit = _personAccountList.FirstOrDefault(p => p.Pcode == PCodeSearchable);
                     CurrentPersonAccountDto = Mapper.Map<PersonAccountDto>(accountToEdit);
-                    CurrentHesabNo = accountToEdit.HesabNo;
+                    HesabNoSearchable = accountToEdit.HesabNo;
                     IsEditing = true;
                 }
                 else
                 {
                     Mapper.Map(new Person(), CurrentPersonAccountDto);
-                    CurrentHesabNo = 0;
+                    HesabNoSearchable = 0;
                     IsEditing = false;
                 }
             }
@@ -668,8 +649,8 @@
                 CurrentPersonAccountDto = Mapper.Map<PersonAccountDto>(personaccountToEdit);
                 CurrentHesabNo = personaccountToEdit.HesabNo;
 
-            }
-            else
+                }
+                else
                 {
                 //_snackBar.Add(" کد سپرده گذار یافت نشد ", Severity.Success, config => { config.HideIcon = true; config.VisibleStateDuration = 4000;  });
                 _snackBar.Add(" کد سپرده گذار یافت نشد ", Severity.Success);
@@ -688,10 +669,10 @@
                                         x.Family.Contains(searchString, StringComparison.InvariantCultureIgnoreCase) ||
                                         x.Name.Contains(searchString, StringComparison.InvariantCultureIgnoreCase))
                             .Skip(currentPage * 5)
-                            .Take(5)
+    .Take(5)
         .ToList();
-    return true;
-        }
+            return true;
+                }
     */
 
 }}
