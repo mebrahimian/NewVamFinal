@@ -37,6 +37,7 @@
                             For="@(() => CurrentPersonDto.Code)"
                             @bind-Value="PCodeSearchable"
                             MaxLength="5"
+                            InputType="InputType.Text"
                             onkeyup="OnPCodeChanged"
                             ErrorText="@GetErrorMessageForField(nameof(CurrentPersonDto.Code))" />
                         </div>
@@ -96,7 +97,7 @@
                     <!-- ردیف سوم: MelliCode و TelNoو bankType و HesabBank -->
                     <MudItem xs="12" sm="6" md="3">
                         <div style="width: 150px;">
-                            <MudTextField Label="کد ملی" @bind-Value="CurrentPersonDto.Mellicode" />
+                            <MudTextField Label="کد ملی" @bind-Value="CurrentPersonDto.Mellicode" InputType=" InputType.Text" />
                         </div>
                     </MudItem>
                     <MudItem xs="12" sm="6" md="3">
@@ -472,7 +473,7 @@
     if (_Db.Persons.Any(p => p.Code == PCodeSearchable))   // کد پرسنل ثبت شده در صفحه وب اگر موجود بود پرشود
         {
         var personToEdit = Persons.FirstOrDefault(p => p.Code == PCodeSearchable);
-        CurrentPersonDto = Mapper.Map<PersonDto>(personToEdit);
+    CurrentPersonDto = Mapper.Map<PersonDto>(personToEdit);
     CurrentPersonId = personToEdit.IdDi;
 
     }
@@ -498,17 +499,28 @@
     {
         if (PCodeSearchable?.Length == 5)
         {
-            CurrentPersonPictureAddress = PersonServices.GetPersonPictureAddress(PCodeSearchable);
-            if (_Db.Persons.Any(p => p.Code == PCodeSearchable))   // کد پرسنل ثبت شده در صفحه وب اگر موجود بود پرشود
+            if (PCodeSearchable.All(char.IsDigit))    /// کنترل عددی بودن کد
             {
-                var personToEdit = Persons.FirstOrDefault(p => p.Code == PCodeSearchable);
-                CurrentPersonDto = Mapper.Map<PersonDto>(personToEdit);
-                CurrentPersonId = personToEdit.IdDi;
-                IsEditing = true;
 
+                CurrentPersonPictureAddress = PersonServices.GetPersonPictureAddress(PCodeSearchable);
+                if (_Db.Persons.Any(p => p.Code == PCodeSearchable))   // کد پرسنل ثبت شده در صفحه وب اگر موجود بود پرشود
+                {
+                    var personToEdit = Persons.FirstOrDefault(p => p.Code == PCodeSearchable);
+                    CurrentPersonDto = Mapper.Map<PersonDto>(personToEdit);
+                    CurrentPersonId = personToEdit.IdDi;
+                    IsEditing = true;
+
+                }
+                else
+                {
+                    Mapper.Map(new Person(), CurrentPersonDto);
+                    CurrentPersonId = 0;
+                    IsEditing = false;
+                }
             }
-            else{
-                Mapper.Map(new Person(), CurrentPersonDto);
+            else
+            {
+                _snackBar.Add($"  فیلد باید فقط عددی باشد", Severity.Warning);
                 CurrentPersonId = 0;
                 IsEditing = false;
             }

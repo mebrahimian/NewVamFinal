@@ -34,6 +34,7 @@
                         <MudTextField Label="کد شخص" Required Immediate="true"
                         For="@(() => CurrentPersonAccountDto.Pcode)"
                         @bind-Value="PCodeSearchable"
+                        InputType="InputType.Text"
                         MaxLength="5"
                         onkeyup="OnPCodeChanged"
                         ErrorText="@GetErrorMessageForField(nameof(CurrentPersonAccountDto.Pcode))" />
@@ -49,42 +50,42 @@
                         @if (CurrentPersonAccountDto.Curqty != 0) {
                             @if (CurrentPersonAccountDto.V_Mojodi > 10000000000) {
                                 <MudNumericField T="long?" 
-                                  @bind-Value="CurrentPersonAccountDto.V_Mojodi"  
-                                  Format="###,###"
-                                  Adornment="Adornment.End" 
-                                  AdornmentText="ریال"
-                                  Label="موجودی"
-                                  Variant="Variant.Outlined"
-                                  HideSpinButtons="true"
-                                  Style="font-size:18px"
-                                  readonly="true" />
-                             }
+                                @bind-Value="CurrentPersonAccountDto.V_Mojodi"  
+                                Format="###,###"
+                                Adornment="Adornment.End" 
+                                AdornmentText="ریال"
+                                Label="موجودی"
+                                Variant="Variant.Outlined"
+                                HideSpinButtons="true"
+                                Style="font-size:18px"
+                                readonly="true" />
+                            }
                             else if (CurrentPersonAccountDto.V_Mojodi > 100000000)
-                                {
-                                    <MudNumericField T="long?"
-                                      @bind-Value="CurrentPersonAccountDto.V_Mojodi"
-                                      Format="###,###"
-                                      Adornment="Adornment.End"
-                                      AdornmentText="ریال"
-                                      Label="موجودی"
-                                      Variant="Variant.Outlined"
-                                      HideSpinButtons="true"
-                                      Style="font-size:20px"
-                                      readonly="true" />
-                                } else 
-                                {
-                                    <MudNumericField T="long?"
-                                      @bind-Value="CurrentPersonAccountDto.V_Mojodi"
-                                      Format="###,###"
-                                      Adornment="Adornment.End"
-                                      AdornmentText="ریال"
-                                      Label="موجودی"
-                                      Variant="Variant.Outlined"
-                                      HideSpinButtons="true"
-                                      Style="font-size:22px"
-                                      readonly="true" />
-                                }
-                            
+                            {
+                                <MudNumericField T="long?"
+                                @bind-Value="CurrentPersonAccountDto.V_Mojodi"
+                                Format="###,###"
+                                Adornment="Adornment.End"
+                                AdornmentText="ریال"
+                                Label="موجودی"
+                                Variant="Variant.Outlined"
+                                HideSpinButtons="true"
+                                Style="font-size:20px"
+                                readonly="true" />
+                            } else 
+                            {
+                                <MudNumericField T="long?"
+                                @bind-Value="CurrentPersonAccountDto.V_Mojodi"
+                                Format="###,###"
+                                Adornment="Adornment.End"
+                                AdornmentText="ریال"
+                                Label="موجودی"
+                                Variant="Variant.Outlined"
+                                HideSpinButtons="true"
+                                Style="font-size:22px"
+                                readonly="true" />
+                            }
+
                         }
 
 
@@ -95,7 +96,9 @@
                     <!-- ردیف دوم: Name و Familyو Father و IssueNo -->
                     <MudItem xs="12" sm="6" md="3">
                         <div class="mt-n6" style="display: flex;font-size: 18px; font-weight: bold;">
-                            <MudTextField Style="justify-content:right;width:65%" Label="شماره حساب" @bind-Value="CurrentPersonAccountDto.HesabNo" InputType="InputType.Text" />
+                            <MudTextField Style="justify-content:right;width:65%" 
+                            Label="شماره حساب" @bind-Value="CurrentPersonAccountDto.HesabNo" 
+                            InputType="InputType.Text" />
                             <MudText Style="justify-content:left;width:45%" Class="mt-5 ml-n3">تاریخ افتتاح :</MudText>
                         </div>
                     </MudItem>
@@ -417,7 +420,7 @@
         // به کاربر پیام خطای مناسب نمایش داده می‌شود
 
         _logger.LogError(ex, "خطایی در ذخیره‌سازی داده‌ها به پایگاه داده رخ داد.");
-        }
+    }
     */
     }
 
@@ -571,33 +574,41 @@
         }
     }
 
-
-
     private void OnPCodeChanged()
     {
         if (PCodeSearchable?.Length == 5)
         {
-            CurrentPersonPictureAddress = PersonServices.GetPersonPictureAddress(PCodeSearchable);
-            if (_Db.Persons.Any(p => p.Code == PCodeSearchable))   // چک وجود پرسنل
+            if (PCodeSearchable.All(char.IsDigit))    /// کنترل عددی بودن کد
             {
-                if (_Db.Hesabs.Any(p => p.Pcode == PCodeSearchable))   // کد حساب ثبت شده در صفحه وب اگر موجود بود پرشود
+                CurrentPersonPictureAddress = PersonServices.GetPersonPictureAddress(PCodeSearchable);
+                if (_Db.Persons.Any(p => p.Code == PCodeSearchable))   // چک وجود پرسنل
                 {
-                    var accountToEdit = _personAccountList.FirstOrDefault(p => p.Pcode == PCodeSearchable);
-                    CurrentPersonAccountDto = Mapper.Map<PersonAccountDto>(accountToEdit);
-                    CurrentHesabNo = accountToEdit.HesabNo;
-                    IsEditing = true;
+                    if (_Db.Hesabs.Any(p => p.Pcode == PCodeSearchable))   // کد حساب ثبت شده در صفحه وب اگر موجود بود پرشود
+                    {
+                        var accountToEdit = _personAccountList.FirstOrDefault(p => p.Pcode == PCodeSearchable);
+                        CurrentPersonAccountDto = Mapper.Map<PersonAccountDto>(accountToEdit);
+                        CurrentHesabNo = accountToEdit.HesabNo;
+                        IsEditing = true;
+                    }
+                    else
+                    {
+                        Mapper.Map(new Person(), CurrentPersonAccountDto);
+                        CurrentHesabNo = 0;
+                        IsEditing = false;
+                    }
                 }
                 else
                 {
-                    Mapper.Map(new Person(), CurrentPersonAccountDto);
-                    CurrentHesabNo = 0;
+                    _snackBar.Add(" سپرده گذار یافت نشد ", Severity.Warning);
+                    Mapper.Map(new PersonAccountDto(), CurrentPersonAccountDto);
+                    PCodeSearchable = "";
                     IsEditing = false;
+                    CancelEdit();
                 }
             }
-            else
+            else 
             {
-                _snackBar.Add(" سپرده گذار یافت نشد ", Severity.Warning);
-                Mapper.Map(new PersonAccountDto(), CurrentPersonAccountDto);
+                _snackBar.Add($"  فیلد باید فقط عددی باشد", Severity.Warning);
                 PCodeSearchable = "";
                 IsEditing = false;
                 CancelEdit();
