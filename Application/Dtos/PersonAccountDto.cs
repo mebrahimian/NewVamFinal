@@ -18,9 +18,15 @@ namespace VamBlazor.Client.Application.Dtos
         [Display(Name = "شماره حساب")]
         [Required(ErrorMessage = "شماره حساب اجباری است ")]
         public long HesabNo { get; set; }
+        [Display(Name = "تاریخ افتتاح")]
+        [Required(ErrorMessage = "تاریخ افتتاح اجباری است ")]
         public string? Date { get; set; }
+        [Display(Name = "موجودی اولیه")]
+        [Required(ErrorMessage = "موجودی اولیه اجباری است ")]
         public long? Firstqty { get; set; } = 0;
 
+        [Display(Name = "مبلغ ماهیانه")]
+        [Required(ErrorMessage = "مبلغ ماهیانه اجباری است ")]
         public long? Monthqty { get; set; } = 0;
 
         public long? Curqty { get; set; } = 0;

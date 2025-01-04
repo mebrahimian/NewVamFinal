@@ -14,3 +14,27 @@
                 HesabNo = account.HesabNo,
                 V_Mojodi = account.V_Mojodi
                })
+
+
+CREATE TABLE [dbo].[tblDate10](
+	[HDate] [nvarchar](10) NULL,
+	[GDate] [datetime] NOT NULL,
+	[HYear] [nvarchar](4) NULL,
+	[GYear] [char](4) NULL,
+	[HYrMth] [varchar](6) NULL,
+	[GYrMth] [varchar](6) NULL,
+	[HMonthNo] [varchar](2) NOT NULL,
+	[GMonthNo] [varchar](2) NULL,
+	[HMonthName] [varchar](15) NULL,
+	[GMonthName] [varchar](3) NULL,
+	[HWeekNo] [tinyint] NULL,
+	[GWeekNo] [tinyint] NULL,
+	[HDay] [tinyint] NULL,
+	[GDay] [tinyint] NULL,
+	[HMonthLen] [tinyint] NULL,
+	[GMonthLen] [tinyint] NULL,
+	[HWeekDayName] [varchar](15) NULL,
+	[GWeekDayName] [varchar](15) NULL,
+	[HWeekDayNo] [tinyint] NOT NULL,
+	[GWeekDayNo] [tinyint] NULL,
+	[DayName] [nvarchar](20) NULL,

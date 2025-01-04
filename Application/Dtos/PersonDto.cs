@@ -45,7 +45,7 @@ namespace VamBlazor.Client.Application.Dtos
         public string? HesabBank { get; set; }
         public string? V_CityDesc { get; set; } 
 
-        public string CodePlaceHolder => "کدشخص را وارد کنید "; 
+        public string CodePlaceHolder => "کدشخص را.. وارد کنید "; 
         public string NamePlaceHolder => "نام را وارد کنید ";
         public string FamilyPlaceHolder => "نام خانوادگی را وارد کنید ";
     }

@@ -48,7 +48,8 @@ namespace DAL
         public  DbSet<User> Users { get; set; }
 
         public  DbSet<UsersLog> UsersLogs { get; set; }
-
+      
+        public DbSet<tblDate> tblDates { get; set; }    
         public DatabaseContext(DbContextOptions<DatabaseContext> options) : base(options) { }
         /*
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -617,6 +618,30 @@ namespace DAL
                     .IsUnicode(false)
                     .IsFixedLength();
             });
+            modelBuilder.Entity<tblDate>(entity =>
+            {
+                 entity.HasKey(e => e.GDate);
+
+                 entity.ToTable("tblDate10");
+
+                 entity.Property(e => e.HDate)
+                     .HasMaxLength(8);
+                 entity.Property(e => e.HYear)
+                     .HasMaxLength(4);
+                 entity.Property(e => e.GYear)
+                     .HasMaxLength(4);
+                 entity.Property(e => e.HYrMth)
+                     .HasMaxLength(6);
+                 entity.Property(e => e.GYrMth)
+                     .HasMaxLength(6);
+                 entity.Property(e => e.HMonthName)
+                     .HasMaxLength(15);
+                 entity.Property(e => e.HWeekDayName)
+                     .HasMaxLength(15);
+                 entity.Property(e => e.GWeekDayName)
+                     .HasMaxLength(15);
+                
+             });
 
            
         }

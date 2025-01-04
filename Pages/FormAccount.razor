@@ -22,11 +22,15 @@
 @using VamBlazor.Client.Application.Services
 
 
+
 <MudContainer style="font-family:'VazirUI';">
 
     <MudPaper>
         <MudText Typo="Typo.body2" Align="Align.Center" Style="height:25px;background-color:cadetblue" Class="mt-2">فرم وروداطلاعات حساب اشخاص</MudText>
-        <MudForm @ref="PersonsAccountForm" @bind-IsValid="isValid" Spacing="16" Class="p-4">
+        <MudForm @ref="PersonsAccountForm" @bind-IsValid="isValid" 
+                 Model="CurrentPersonAccountDto" ValidationCompleted="HandleSubmit" 
+                 Spacing="16" Class="p-4">
+            <DataAnnotationsValidator/>
             <MudRTLProvider RightToLeft="true">
                 <MudGrid>
                     <!-- ردیف اول: Code و City , Sex -->
@@ -105,7 +109,9 @@
                             For="@(() => CurrentPersonAccountDto.HesabNo)"
                             @bind-Value="HesabNoSearchable"
                             InputType="InputType.Text"
-                            OnBlur="OnAccountChanged" />
+                            OnBlur="OnAccountChanged"
+                            ErrorText="@GetErrorMessageForField(nameof(CurrentPersonAccountDto.HesabNo))" />
+
                             <MudText Style="justify-content:left;width:45%" Class="mt-5 ml-n3">تاریخ افتتاح :</MudText>
                         </div>
                     </MudItem>
@@ -139,6 +145,7 @@
                                 @bind-Value="CurrentPersonAccountDto.V_Year"
                                 Min="1300"
                                 Max="1499"
+                                OnBlur="OnCheckDateValidity"
                                 Immediate="true" />
                             </MudTooltip>
 
@@ -161,7 +168,8 @@
                                 <MudNumericField Label="مبلغ افتتاحیه" Variant="Variant.Outlined" Adornment="Adornment.End" AdornmentText="ریال"
                                 @bind-Value="CurrentPersonAccountDto.Firstqty"
                                 Format="###,###"
-                                HideSpinButtons="true" />
+                                HideSpinButtons="true"
+                                ErrorText="@GetErrorMessageForField(nameof(CurrentPersonAccountDto.Firstqty))" />
                             </MudTooltip>
                         </div>
                     </MudItem>
@@ -171,22 +179,22 @@
                                 <MudNumericField Label="مبلغ ماهیانه" Variant="Variant.Outlined" Adornment="Adornment.End" AdornmentText="ریال"
                                 @bind-Value="CurrentPersonAccountDto.Monthqty"
                                 Format="###,###"
-                                HideSpinButtons="true" />
+                                HideSpinButtons="true"
+                                ErrorText="@GetErrorMessageForField(nameof(CurrentPersonAccountDto.Monthqty))" />
                             </MudTooltip>
                         </div>
                     </MudItem>
 
-                    <MudItem xs="12" sm="6" md="3" >
+                    <MudItem xs="12" sm="6" md="3">
                         <div style="width: 75%;align-content:start" class="mr-20">
-                            <MudTextField Label="حساب معرف" Immediate="true"  
+                            <MudTextField Label="حساب معرف" Immediate="true"
                             For="@(() => CurrentPersonAccountDto.IdDi)"
                             @bind-Value="CurrentPersonAccountDto.IdDi"
-                            onblur="OnMoarefChanged"
-                            ErrorText="@GetErrorMessageForField(nameof(CurrentPersonAccountDto.IdDi))" />
+                            onblur="OnMoarefChanged" />
                         </div>
                     </MudItem>
                     <MudItem xs="12" sm="6" md="3">
-                        <MudText Typo="Typo.h5" class="mr-n20 mt-5" Style="background-color:azure;">@_MoarefDesc</MudText>
+                        <MudText Typo="Typo.h5" class="mr-n20 mt-5" Style="background-color:azure;font-size:18px;">@_MoarefDesc</MudText>
                     </MudItem>
                     <!-- ردیف چهارم: MelliCode و TelNoو bankType و HesabBank -->
                     <MudItem xs="12" sm="6" md="3">
@@ -268,22 +276,25 @@
     ///
 
     private bool ShowPersonList { get; set; } = false;
-    private List<Person> Persons = new List<Person>();
+    private List<Hesab> Hesabs = new List<Hesab>();
+
+    //  private List<Person> Persons = new List<Person>();
     private List<PersonAccountDto> _personAccountList = new List<PersonAccountDto>();
-    //   private PersonDto CurrentPersonDto = new PersonDto();
+
+    //  private PersonDto CurrentPersonDto = new PersonDto();
     private PersonAccountDto CurrentPersonAccountDto = new PersonAccountDto();
 
     private string? CurrentPersonPictureAddress;
-    private bool IsEditing;
-    private bool isValid;
-    private MudForm? PersonsAccountForm;
-    // private MudTextField<string> PersonCode;
+    private bool isEditing = false;
+    private bool isValid = false;
+    private MudForm PersonsAccountForm =new MudForm();
+
     private string? searchString1 = string.Empty;
     private string? PCodeSearchable = string.Empty;
     private long HesabNoSearchable = 0;
     private string? _MoarefDesc = string.Empty;
 
-    private HashSet<Person> selectedItems = new HashSet<Person>();
+    //  private HashSet<Person> selectedItems = new HashSet<Person>();
 
     //Pagination Variables
     private HorizontalAlignment horizontalAlignment = HorizontalAlignment.Right;
@@ -301,7 +312,7 @@
 
 
     //Order Variable
-    private Func<Person, object> currentSortBy = p => p.Code; // فیلد پیش‌فرض برای مرتب‌سازی
+    private Func<Hesab, object> currentSortBy = p => p.HesabNo; // فیلد پیش‌فرض برای مرتب‌سازی
     private SortDirection currentSortDirection = SortDirection.Ascending;
 
     protected override async Task OnInitializedAsync()
@@ -313,15 +324,15 @@
                 return; // خروج از متد اگر هیچ داده‌ای وجود نداشته باشد
             }
 
-            pageSize = _Db.Persons.Count();
+            pageSize = _Db.Hesabs.Count();
             var query = (from person in _Db.Persons
                          join account in _Db.Hesabs on person.Code equals account.Pcode
                          orderby person.Code
                          select new PersonAccountDto
                              {
                                  FullName = (string.IsNullOrEmpty(person.Name) ? "" : person.Name.Trim()) + " " +
-                                                                            (string.IsNullOrEmpty(person.Family) ? "" : person.Family.Trim()) + "(" +
-                                                                            (string.IsNullOrEmpty(person.Father) ? "" : person.Father.Trim()) + ")",
+                                                                                (string.IsNullOrEmpty(person.Family) ? "" : person.Family.Trim()) + "(" +
+                                                                                (string.IsNullOrEmpty(person.Father) ? "" : person.Father.Trim()) + ")",
                                  Family = person.Family,
                                  Name = person.Name,
                                  Father = person.Father,
@@ -348,12 +359,11 @@
             {
                 _personAccountList = query;
             }
-            if (CurrentPersonAccountDto != null)
-            {
-                Mapper.Map(new PersonAccountDto(), CurrentPersonAccountDto);
-            }
+
+            Mapper.Map(new PersonAccountDto(), CurrentPersonAccountDto);
 
         }
+
         catch (HttpRequestException ex)
         {
 
@@ -391,46 +401,51 @@
     }
     private void SavePerson()
     {
-        /*
+
         try
         {
-        if (IsEditing)
-        {
-        var person = _Db.Persons.FirstOrDefault(p => p.IdDi == CurrentHesabNo);
-        if (person != null)
-        {
-        _Db.Entry(person).Property(p => p.IdDi).IsModified = false;
-        Mapper.Map(CurrentPersonDto, person); // Mapping DTO to Entity
-        _snackBar.Add($"پرسنل {CurrentPersonDto.Name} {CurrentPersonDto.Family} اصلاح شد", Severity.Success);
-        // person.Name = CurrentPersonDto.Name;
-        // person.Family = CurrentPersonDto.Family;
-        // person.Code = CurrentPersonDto.Code;
-        }
-        }
-        else
-        {
-        var newPerson = Mapper.Map<Person>(CurrentPersonDto); // Mapping DTO to Entity
-        CurrentHesabNo = 0;
-        _Db.Persons.Add(newPerson);
-        Persons.Add(newPerson);
-        _snackBar.Add($"پرسنل {CurrentPersonDto.Name} {CurrentPersonDto.Family} ثبت شد", Severity.Success);
+            if (isEditing)
+            {
 
-        }
-        //Persons.Count();
-        _Db.SaveChanges();
-        _logger.LogInformation($"پرسنل {CurrentPersonDto.Name} {CurrentPersonDto.Family} ثبت شد");
-        CancelEdit();
+    /*
+    var person = _Db.Persons.FirstOrDefault(p => p.IdDi == CurrentHesabNo);
+    if (person != null)
+    {
+    _Db.Entry(person).Property(p => p.IdDi).IsModified = false;
+    Mapper.Map(CurrentPersonDto, person); // Mapping DTO to Entity
+    _snackBar.Add($"پرسنل {CurrentPersonDto.Name} {CurrentPersonDto.Family} اصلاح شد", Severity.Success);
+    // person.Name = CurrentPersonDto.Name;
+    // person.Family = CurrentPersonDto.Family;
+    // person.Code = CurrentPersonDto.Code;
+    }
+            */
+            }
+            else
+            {
+                CurrentPersonAccountDto.Pcode = PCodeSearchable;
+                CurrentPersonAccountDto.HesabNo = HesabNoSearchable;
+                var newAccountPerson = Mapper.Map<PersonAccountDto>(CurrentPersonAccountDto); // Mapping DTO to Entity
+                var newHesab = Mapper.Map<Hesab>(CurrentPersonAccountDto);
+                _Db.Hesabs.Add(newHesab);
+                _personAccountList.Add(newAccountPerson);
+                _snackBar.Add($"حساب {CurrentPersonAccountDto.HesabNo} ثبت شد", Severity.Success);
+
+            }
+            //Persons.Count();
+            _Db.SaveChanges();
+            _logger.LogInformation($"حساب {CurrentPersonAccountDto.FullName}  ثبت شد");
+            CancelEdit();
         }
         catch (DbUpdateException ex)
         {
-        // اینجا خطاهایی که مربوط به مشکلات ذخیره‌سازی در پایگاه داده هستند مدیریت می‌شود
-        // مثلاً خطاهای مربوط به نقض محدودیت‌های پایگاه داده مانند unique constraint
+            // اینجا خطاهایی که مربوط به مشکلات ذخیره‌سازی در پایگاه داده هستند مدیریت می‌شود
+            // مثلاً خطاهای مربوط به نقض محدودیت‌های پایگاه داده مانند unique constraint
 
-        // به کاربر پیام خطای مناسب نمایش داده می‌شود
+            // به کاربر پیام خطای مناسب نمایش داده می‌شود
 
-        _logger.LogError(ex, "خطایی در ذخیره‌سازی داده‌ها به پایگاه داده رخ داد.");
-    }
-    */
+            _logger.LogError(ex, "خطایی در ذخیره‌سازی داده‌ها به پایگاه داده رخ داد.");
+        }
+
     }
 
     private void EditPerson(PersonAccountDto personaccountdto)
@@ -440,12 +455,12 @@
         HesabNoSearchable = CurrentPersonAccountDto.HesabNo;
         PCodeSearchable = CurrentPersonAccountDto.Pcode;
         var MoarefCode = CurrentPersonAccountDto.IdDi;
-        IsEditing = true;
+        isEditing = true;
         if (personaccountdto.IdDi != 0)
         {
             _MoarefDesc = _personAccountList?.FirstOrDefault(p => p.HesabNo == MoarefCode)?.FullName;
         }
-        
+
 
     }
 
@@ -495,7 +510,7 @@
         CurrentPersonAccountDto = new PersonAccountDto();
         HesabNoSearchable = 0;
         CurrentPersonPictureAddress = PersonServices.GetPersonPictureAddress("000");
-        IsEditing = false;
+        isEditing = false;
         PersonsAccountForm?.ResetAsync();
     }
 
@@ -522,15 +537,23 @@
     // متدی برای ارسال فرم
     private void HandleSubmit()
     {
-        isValid = ValidateModel();
+        {
+            // انجام اعتبارسنجی برای همه فیلدها
+            isValid = ValidateModel();
+
+            if (!isValid)
+            {
+                _snackBar.Add("لطفاً تمام فیلدهای ضروری را پر کنید.", Severity.Error);
+            }
+        }
     }
 
     // اعتبارسنجی مدل
     private bool ValidateModel()
     {
+        isValid = PersonsAccountForm.IsValid;
         var context = new ValidationContext(CurrentPersonAccountDto);
-        var validationResults = new List<ValidationResult>
-    ();
+        var validationResults = new List<ValidationResult>();
         return Validator.TryValidateObject(CurrentPersonAccountDto, context, validationResults, true);
     }
 
@@ -538,11 +561,11 @@
     {
         ShowPersonList = !ShowPersonList;
     }
-    private void SortTableByName()
-    {
-        currentSortBy = p => p.Name ?? "";
-        ToggleSortDirection();
-    }
+    // private void SortTableByName()
+    // {
+    //     currentSortBy = p => p.HesabNo ?? "";
+    //     ToggleSortDirection();
+    // }
     private void ToggleSortDirection()
     {
         if (currentSortDirection == SortDirection.Ascending)
@@ -555,7 +578,6 @@
         }
 
     }
-
 
     private void OnPCodeChanged()
     {
@@ -571,17 +593,34 @@
                         var accountToEdit = _personAccountList.FirstOrDefault(p => p.Pcode == PCodeSearchable);
                         if (accountToEdit != null)
                         {
-                            CurrentPersonAccountDto = Mapper.Map<PersonAccountDto>
-                                (accountToEdit);
+                            CurrentPersonAccountDto = Mapper.Map<PersonAccountDto>(accountToEdit);
                             HesabNoSearchable = accountToEdit.HesabNo;
-                            IsEditing = true;
+                            if (accountToEdit.IdDi != 0)
+                            {
+                                _MoarefDesc = _personAccountList.FirstOrDefault(p => p.HesabNo == accountToEdit.IdDi).FullName ?? "";
+                            }
+                            else
+                            {
+                                _MoarefDesc = "";
+                            }
+
+                            isEditing = true;
+                            
                         }
                     }
                     else
                     {
-                        Mapper.Map(new Person(), CurrentPersonAccountDto);
+                        Mapper.Map(new PersonAccountDto(), CurrentPersonAccountDto);
+                        var record = _Db.tblDates.FirstOrDefault(d => d.GDate == DateTime.Now.Date); // مقایسه فقط تاریخ بدون زمان
+                        var cDateShamsi = record?.HDate; // اگر record null باشد، cDateShamsi هم null خواهد بود
+
+                        CurrentPersonAccountDto.Date = cDateShamsi;
+                        CurrentPersonAccountDto.V_Year = DateFunctions.GetYear(cDateShamsi);
+                        CurrentPersonAccountDto.V_Month = DateFunctions.GetMonth(cDateShamsi);
+                        CurrentPersonAccountDto.V_Day = DateFunctions.GetDay(cDateShamsi);
                         HesabNoSearchable = 0;
-                        IsEditing = false;
+                        isEditing = false;
+                        isValid = false;
                     }
                 }
                 else
@@ -589,7 +628,7 @@
                     _snackBar.Add(" سپرده گذار یافت نشد ", Severity.Warning);
                     Mapper.Map(new PersonAccountDto(), CurrentPersonAccountDto);
                     PCodeSearchable = "";
-                    IsEditing = false;
+                    isEditing = false;
                     CancelEdit();
                 }
             }
@@ -597,9 +636,13 @@
             {
                 _snackBar.Add($"  فیلد باید فقط عددی باشد", Severity.Warning);
                 PCodeSearchable = "";
-                IsEditing = false;
+                isEditing = false;
                 CancelEdit();
             }
+        }
+        else
+        {
+            isValid = PersonsAccountForm.Validate().IsCompleted;
         }
     }
 
@@ -631,7 +674,7 @@
     }
     private void OnMoarefChanged()
     {
-        if (CurrentPersonAccountDto.IdDi != 0 )
+        if (CurrentPersonAccountDto.IdDi != 0)
         {
             if (_personAccountList.Any(p => p.HesabNo == CurrentPersonAccountDto.IdDi))   // کد معرف در فایل حساب یافت شد
             {
@@ -639,8 +682,9 @@
                 {
                     _snackBar.Add($" معرف مجاز نیست", Severity.Error);
                     CurrentPersonAccountDto.IdDi = 0;
+                    _MoarefDesc = "";
                 }
-                else 
+                else
                 {
                     _MoarefDesc = _personAccountList.FirstOrDefault(p => p.HesabNo == CurrentPersonAccountDto.IdDi).FullName ?? "";
                 }
@@ -653,8 +697,22 @@
 
             }
 
-         }
+        }
     }
+    private void OnCheckDateValidity()
+    {
+        var cYear = CurrentPersonAccountDto.V_Year.ToString();
+        var cMonth = "0" + CurrentPersonAccountDto.V_Month.ToString();
+        var cDay = "0" + CurrentPersonAccountDto.V_Day.ToString();
+        var cDate = cYear + "/" + cMonth.Substring(cMonth.Length - 2, 2) + "/" + cDay.Substring(cDay.Length - 2, 2);
+
+        if  (!DateFunctions.IsValidShamsiDay(_Db, cDate)) 
+        {
+            _snackBar.Add($" تاریخ معتبر نیست ", Severity.Error);
+        }
+
+    }
+
     /*
     private void OnBlurFnc()
     {
@@ -679,7 +737,7 @@
         //  Mapper.Map(new PersonAccountDto(), CurrentPersonAccountDto);
         //  CancelEdit();
 
-        }
+    }
     }
     }
     */
@@ -695,4 +753,4 @@
     return true;
     }
     */
-}}
+}
