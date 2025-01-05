@@ -27,9 +27,7 @@
 
     <MudPaper>
         <MudText Typo="Typo.body2" Align="Align.Center" Style="height:25px;background-color:cadetblue" Class="mt-2">فرم وروداطلاعات حساب اشخاص</MudText>
-        <MudForm @ref="PersonsAccountForm" @bind-IsValid="isValid" 
-                 Model="CurrentPersonAccountDto" ValidationCompleted="HandleSubmit" 
-                 Spacing="16" Class="p-4">
+        <EditForm @ref="PersonsAccountForm" Model="CurrentPersonAccountDto" @bind-IsValid="isValid" ValidationCompleted="HandleSubmit" Spacing="16" Class="p-4">
             <DataAnnotationsValidator/>
             <MudRTLProvider RightToLeft="true">
                 <MudGrid>
@@ -210,13 +208,13 @@
             </MudRTLProvider>
             <!-- دکمه‌ها -->
             <div style="display: flex; gap: 10px;">
-                <MudButton style="width:30%" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Save" Color="Color.Primary" Disabled="@(!isValid)" OnClick="SavePerson">ذخیره</MudButton>
+                <MudButton style="width:30%" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Save" Color="Color.Primary" Disabled="@(!true)" OnClick="SavePerson">ذخیره</MudButton>
                 <MudButton style="width:30%" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Cancel" IconColor="Color.Tertiary" OnClick="CancelEdit">لغو</MudButton>
                 <MudButton style="width:30%" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.SpeakerNotes" IconColor="Color.Warning" OnClick="TogglePersonList">
                     @(ShowPersonList ? "مخفی کردن لیست پرسنل" : "نمایش لیست پرسنل")
                 </MudButton>
             </div>
-        </MudForm>
+        </EditForm>
 
 
     </MudPaper>
@@ -287,7 +285,7 @@
     private string? CurrentPersonPictureAddress;
     private bool isEditing = false;
     private bool isValid = false;
-    private MudForm PersonsAccountForm =new MudForm();
+    private EditForm PersonsAccountForm =new EditForm();
 
     private string? searchString1 = string.Empty;
     private string? PCodeSearchable = string.Empty;
@@ -361,6 +359,15 @@
             }
 
             Mapper.Map(new PersonAccountDto(), CurrentPersonAccountDto);
+            ///
+            ///تاریخ با روز جاری پرمیشود
+            ///
+            var record = _Db.tblDates.FirstOrDefault(d => d.GDate == DateTime.Now.Date); // مقایسه فقط تاریخ بدون زمان
+            var cDateShamsi = record?.HDate; // اگر record null باشد، cDateShamsi هم null خواهد بود
+            CurrentPersonAccountDto.V_Year = DateFunctions.GetYear(cDateShamsi);
+            CurrentPersonAccountDto.V_Month = DateFunctions.GetMonth(cDateShamsi);
+            CurrentPersonAccountDto.V_Day = DateFunctions.GetDay(cDateShamsi);
+            CurrentPersonAccountDto.Date = cDateShamsi;
 
         }
 
@@ -399,6 +406,31 @@
         }
         return false;
     }
+
+    // اعتبارسنجی مدل
+    private bool ValidateModel()
+    {
+
+        var context = new ValidationContext(CurrentPersonAccountDto);
+        var validationResults = new List<ValidationResult>();
+        return Validator.TryValidateObject(CurrentPersonAccountDto, context, validationResults, true);
+    }
+    // متدی برای ارسال فرم
+    private void HandleSubmit()
+    {
+        {
+            // انجام اعتبارسنجی برای همه فیلدها
+            isValid = ValidateModel();
+
+            if (!isValid)
+            {
+                _snackBar.Add("لطفاً تمام فیلدهای ضروری را پر کنید.", Severity.Error);
+            }
+        }
+    }
+
+
+
     private void SavePerson()
     {
 
@@ -407,34 +439,42 @@
             if (isEditing)
             {
 
-    /*
-    var person = _Db.Persons.FirstOrDefault(p => p.IdDi == CurrentHesabNo);
-    if (person != null)
-    {
-    _Db.Entry(person).Property(p => p.IdDi).IsModified = false;
-    Mapper.Map(CurrentPersonDto, person); // Mapping DTO to Entity
-    _snackBar.Add($"پرسنل {CurrentPersonDto.Name} {CurrentPersonDto.Family} اصلاح شد", Severity.Success);
-    // person.Name = CurrentPersonDto.Name;
-    // person.Family = CurrentPersonDto.Family;
-    // person.Code = CurrentPersonDto.Code;
-    }
+                /*
+                var person = _Db.Persons.FirstOrDefault(p => p.IdDi == CurrentHesabNo);
+                if (person != null)
+                {
+                _Db.Entry(person).Property(p => p.IdDi).IsModified = false;
+                Mapper.Map(CurrentPersonDto, person); // Mapping DTO to Entity
+                _snackBar.Add($"پرسنل {CurrentPersonDto.Name} {CurrentPersonDto.Family} اصلاح شد", Severity.Success);
+                // person.Name = CurrentPersonDto.Name;
+                // person.Family = CurrentPersonDto.Family;
+                // person.Code = CurrentPersonDto.Code;
+            }
             */
             }
             else
             {
-                CurrentPersonAccountDto.Pcode = PCodeSearchable;
-                CurrentPersonAccountDto.HesabNo = HesabNoSearchable;
-                var newAccountPerson = Mapper.Map<PersonAccountDto>(CurrentPersonAccountDto); // Mapping DTO to Entity
-                var newHesab = Mapper.Map<Hesab>(CurrentPersonAccountDto);
-                _Db.Hesabs.Add(newHesab);
-                _personAccountList.Add(newAccountPerson);
-                _snackBar.Add($"حساب {CurrentPersonAccountDto.HesabNo} ثبت شد", Severity.Success);
+                // CurrentPersonAccountDto.Pcode = PCodeSearchable;
+                // CurrentPersonAccountDto.HesabNo = HesabNoSearchable;
+                HandleSubmit();
+                if (isValid)
+                {
+                    var newAccountPerson = Mapper.Map<PersonAccountDto>(CurrentPersonAccountDto); // Mapping DTO to Entity
+                    var newHesab = Mapper.Map<Hesab>(CurrentPersonAccountDto);
+                    var newPardar = new PardarDto();
+                    newPardar = CopyFromHesab2Pardar(newHesab);
+                    newPardar = Mapper.Map<Pardar>(newPardar);
+                    _Db.Hesabs.Add(newHesab);
+                    _Db.Pardars.Add(newPardar);
+                    _personAccountList.Add(CurrentPersonAccountDto);
+                    _snackBar.Add($"حساب {CurrentPersonAccountDto.HesabNo} ثبت شد", Severity.Success);
+                }
 
             }
             //Persons.Count();
-            _Db.SaveChanges();
-            _logger.LogInformation($"حساب {CurrentPersonAccountDto.FullName}  ثبت شد");
-            CancelEdit();
+            //   _Db.SaveChanges();
+            // _logger.LogInformation($"حساب {CurrentPersonAccountDto.FullName}  ثبت شد");
+            // CancelEdit();
         }
         catch (DbUpdateException ex)
         {
@@ -511,7 +551,7 @@
         HesabNoSearchable = 0;
         CurrentPersonPictureAddress = PersonServices.GetPersonPictureAddress("000");
         isEditing = false;
-        PersonsAccountForm?.ResetAsync();
+        // PersonsAccountForm?.ResetAsync();
     }
 
 
@@ -534,28 +574,7 @@
         return validationResults.Any() ? validationResults.First().ErrorMessage : string.Empty;
     }
 
-    // متدی برای ارسال فرم
-    private void HandleSubmit()
-    {
-        {
-            // انجام اعتبارسنجی برای همه فیلدها
-            isValid = ValidateModel();
 
-            if (!isValid)
-            {
-                _snackBar.Add("لطفاً تمام فیلدهای ضروری را پر کنید.", Severity.Error);
-            }
-        }
-    }
-
-    // اعتبارسنجی مدل
-    private bool ValidateModel()
-    {
-        isValid = PersonsAccountForm.IsValid;
-        var context = new ValidationContext(CurrentPersonAccountDto);
-        var validationResults = new List<ValidationResult>();
-        return Validator.TryValidateObject(CurrentPersonAccountDto, context, validationResults, true);
-    }
 
     private void TogglePersonList()
     {
@@ -605,22 +624,30 @@
                             }
 
                             isEditing = true;
-                            
+
                         }
                     }
-                    else
+                    else  // حساب جدید
                     {
                         Mapper.Map(new PersonAccountDto(), CurrentPersonAccountDto);
-                        var record = _Db.tblDates.FirstOrDefault(d => d.GDate == DateTime.Now.Date); // مقایسه فقط تاریخ بدون زمان
-                        var cDateShamsi = record?.HDate; // اگر record null باشد، cDateShamsi هم null خواهد بود
+                        var accountToAdd = _Db.Persons.FirstOrDefault(p => p.Code == PCodeSearchable);
 
-                        CurrentPersonAccountDto.Date = cDateShamsi;
-                        CurrentPersonAccountDto.V_Year = DateFunctions.GetYear(cDateShamsi);
-                        CurrentPersonAccountDto.V_Month = DateFunctions.GetMonth(cDateShamsi);
-                        CurrentPersonAccountDto.V_Day = DateFunctions.GetDay(cDateShamsi);
+                        var _FullName = (string.IsNullOrEmpty(accountToAdd.Name) ? "" : accountToAdd.Name.Trim()) + " " +
+                                        (string.IsNullOrEmpty(accountToAdd.Family) ? "" : accountToAdd.Family.Trim()) + "(" +
+                                        (string.IsNullOrEmpty(accountToAdd.Father) ? "" : accountToAdd.Father.Trim()) + ")";
+                        CurrentPersonAccountDto.FullName = _FullName;
+                        CurrentPersonAccountDto.Family = accountToAdd.Family;
+                        CurrentPersonAccountDto.Name = accountToAdd.Name;
+                        CurrentPersonAccountDto.Father = accountToAdd.Father;
+                        CurrentPersonAccountDto.Pcode = accountToAdd.Code;
+                        CurrentPersonAccountDto.Scode = "01";
+                        CurrentPersonAccountDto.P = 0;
+                        CurrentPersonAccountDto.P1 = 0;
+
+
                         HesabNoSearchable = 0;
                         isEditing = false;
-                        isValid = false;
+
                     }
                 }
                 else
@@ -642,7 +669,7 @@
         }
         else
         {
-            isValid = PersonsAccountForm.Validate().IsCompleted;
+            // isValid = PersonsAccountForm.Validate().IsCompleted;
         }
     }
 
@@ -661,6 +688,10 @@
                 _snackBar.Add($" حساب متعلق به {personAccount.FullName} می باشد", Severity.Warning);
                 HesabNoSearchable = CurrentPersonAccountDto.HesabNo;
             }
+        } 
+        else 
+        {
+            CurrentPersonAccountDto.HesabNo = HesabNoSearchable;
         }
 
     }
@@ -712,6 +743,25 @@
         }
 
     }
+
+
+    /// <summary>
+    ///   transfer data
+    /// </summary>
+    public  PardarDto CopyFromHesab2Pardar(Hesab _HesabDto)
+    {
+        var _pardar = new PardarDto();
+        _pardar.Scode = _HesabDto.Scode;
+        _pardar.Pcode = _HesabDto.Pcode;
+        _pardar.Date = _HesabDto.Date;
+        _pardar.Mblg = _HesabDto.Firstqty;
+        _pardar.Action = "3";
+        _pardar.Babat = " : افتتاح حساب درتاریخ" + _HesabDto.Date;
+        
+        return _pardar;
+    }
+
+
 
     /*
     private void OnBlurFnc()
